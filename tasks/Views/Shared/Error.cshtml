@@ -1,0 +1,38 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Something went wrong";
+    ViewData["Subtitle"] = "The page could not be loaded. The details below help with debugging.";
+}
+
+<div class="mx-auto max-w-xl">
+    <div class="card card-pad text-center">
+        <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100">
+            <i data-lucide="triangle-alert" class="h-7 w-7"></i>
+        </span>
+        <h2 class="mt-5 text-[20px] font-semibold tracking-[-0.02em] text-ink-900">An unexpected error occurred</h2>
+        <p class="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-slate-500">
+            Your data is safe — the demo workspace is held in memory. Try the page again, or head back to the dashboard.
+        </p>
+
+        @if (Model.ShowRequestId)
+        {
+            <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Request ID</p>
+                <code class="mt-1 block break-all text-[11.5px] text-slate-600">@Model.RequestId</code>
+            </div>
+        }
+
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <a href="/Dashboard" class="btn btn-primary">
+                <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+                Back to dashboard
+            </a>
+            <a href="/Tasks" class="btn btn-secondary">
+                <i data-lucide="check-square-2" class="h-4 w-4"></i>
+                Open tasks
+            </a>
+        </div>
+
+        <p class="mt-5 text-[11px] text-slate-400">If you are running in Development, the console contains the full stack trace.</p>
+    </div>
+</div>

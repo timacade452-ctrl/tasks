@@ -1,0 +1,139 @@
+@model CourseFormViewModel
+@{
+    var cancelUrl = Model.IsEdit ? $"/Courses/Details/{Model.Id}" : "/Courses";
+    var selectedColor = CourseCatalog.HexFor(Model.Color);
+}
+
+<div class="grid gap-5 lg:grid-cols-3">
+    <div class="space-y-5 lg:col-span-2">
+        <section class="card card-pad">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <i data-lucide="book-open" class="h-4 w-4"></i>
+                </span>
+                <div>
+                    <h2 class="text-[15px] font-semibold text-ink-900">Course details</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">The essentials shown across your workspace.</p>
+                </div>
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors mt-5"></div>
+
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label asp-for="Code" class="label">Course code</label>
+                    <input asp-for="Code" class="input" placeholder="CS 310" autocomplete="off" />
+                    <span asp-validation-for="Code" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="Semester" class="label">Semester</label>
+                    <input asp-for="Semester" class="input" placeholder="Fall 2026" autocomplete="off" />
+                    <span asp-validation-for="Semester" class="field-validation-error"></span>
+                </div>
+                <div class="sm:col-span-2">
+                    <label asp-for="Name" class="label">Course name</label>
+                    <input asp-for="Name" class="input" placeholder="Data Structures &amp; Algorithms" autocomplete="off" />
+                    <span asp-validation-for="Name" class="field-validation-error"></span>
+                </div>
+                <div class="sm:col-span-2">
+                    <label asp-for="Instructor" class="label">Instructor</label>
+                    <input asp-for="Instructor" class="input" placeholder="Prof. Dana Whitfield" autocomplete="off" />
+                    <span asp-validation-for="Instructor" class="field-validation-error"></span>
+                </div>
+                <div class="sm:col-span-2">
+                    <label asp-for="Description" class="label">Description <span class="font-normal text-slate-400">(optional)</span></label>
+                    <textarea asp-for="Description" class="textarea" rows="4" placeholder="What does this course cover? Any notes that help you stay oriented."></textarea>
+                    <span asp-validation-for="Description" class="field-validation-error"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="card card-pad">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <i data-lucide="palette" class="h-4 w-4"></i>
+                </span>
+                <div>
+                    <h2 class="text-[15px] font-semibold text-ink-900">Appearance</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">A color and icon make the course easy to spot.</p>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <span class="label">Course color</span>
+                <div class="flex flex-wrap gap-2.5">
+                    @foreach (var color in CourseCatalog.Colors)
+                    {
+                        var isChecked = string.Equals(selectedColor, color.Hex, StringComparison.OrdinalIgnoreCase);
+                        <label class="group cursor-pointer" title="@color.Name">
+                            <input type="radio" name="Color" value="@color.Hex" class="peer sr-only" checked="@(isChecked ? "checked" : null)" />
+                            <span class="flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-transparent ring-offset-2 transition peer-checked:ring-ink-900 peer-focus-visible:ring-brand-400" style="background-color:@color.Hex">
+                                <i data-lucide="check" class="h-4 w-4 text-white opacity-0 transition peer-checked:opacity-100 @(isChecked ? "opacity-100" : "")"></i>
+                            </span>
+                            <span class="mt-1 block text-center text-[10px] text-slate-400">@color.Name</span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Color" class="field-validation-error"></span>
+            </div>
+
+            <div class="mt-6">
+                <span class="label">Course icon</span>
+                <div class="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    @foreach (var icon in CourseCatalog.Icons)
+                    {
+                        var iconChecked = string.Equals(Model.Icon, icon.Name, StringComparison.OrdinalIgnoreCase);
+                        <label class="cursor-pointer">
+                            <input type="radio" name="Icon" value="@icon.Name" class="peer sr-only" checked="@(iconChecked ? "checked" : null)" />
+                            <span class="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-3 text-[11px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700">
+                                <i data-lucide="@icon.Name" class="h-4 w-4"></i>
+                                @icon.Label
+                            </span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Icon" class="field-validation-error"></span>
+            </div>
+        </section>
+    </div>
+
+    <aside class="space-y-5">
+        <section class="card card-pad">
+            <h2 class="text-[15px] font-semibold text-ink-900">Before you save</h2>
+            <ul class="mt-4 space-y-3 text-[12.5px] leading-relaxed text-slate-600">
+                <li class="flex gap-2.5">
+                    <i data-lucide="badge-check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></i>
+                    <span>Course codes must be unique. Short codes like <span class="font-medium text-ink-900">CS 310</span> read best in lists.</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <i data-lucide="folder-tree" class="mt-0.5 h-4 w-4 shrink-0 text-sky-500"></i>
+                    <span>Materials, tasks and study plans are grouped under this course automatically.</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <i data-lucide="palette" class="mt-0.5 h-4 w-4 shrink-0 text-violet-500"></i>
+                    <span>The color is reused in charts, dots and the course progress bar.</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="card card-pad">
+            <div class="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white" style="background-color:@selectedColor">
+                    <i data-lucide="@(CourseCatalog.IsValidIcon(Model.Icon) ? Model.Icon : "book-open")" class="h-5 w-5"></i>
+                </span>
+                <div class="min-w-0">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">@(string.IsNullOrWhiteSpace(Model.Code) ? "COURSE CODE" : Model.Code)</p>
+                    <p class="truncate text-[13px] font-medium text-ink-900">@(string.IsNullOrWhiteSpace(Model.Name) ? "Course name" : Model.Name)</p>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-col gap-2">
+                <button type="submit" class="btn btn-primary w-full">
+                    <i data-lucide="save" class="h-4 w-4"></i>
+                    @(Model.IsEdit ? "Save changes" : "Create course")
+                </button>
+                <a href="@cancelUrl" class="btn btn-secondary w-full">Cancel</a>
+            </div>
+        </section>
+    </aside>
+</div>

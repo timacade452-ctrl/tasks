@@ -1,0 +1,66 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 760 >>
+stream
+BT
+/F1 22 Tf
+72 718 Td
+(SCCM Administration Guide ? Endpoint Deployment) Tj
+/F2 11 Tf
+0 -36 Td
+0 -19 Td
+(Course: IT 412 ? Microsoft System Center Configuration Manager \(SCCM\)) Tj
+0 -19 Td
+(Lecturer: Eng. Yahye Mohamed | Main Hall) Tj
+0 -19 Td
+(Global Sciences University) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Core Modules:) Tj
+0 -19 Td
+(1. Infrastructure planning: Primary Site, CAS, and Secondary Sites) Tj
+0 -19 Td
+(2. Client deployment methods \(Push, GPO, Manual\)) Tj
+0 -19 Td
+(3. Operating System Deployment \(OSD\) with PXE and WDS) Tj
+0 -19 Td
+(4. Packaging software \(.msi, .exe\) and Software Center deployment) Tj
+0 -19 Td
+(5. Endpoint Protection and compliance reporting) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Class: Mondays 2:00 PM - 5:00 PM \(Main Hall\).) Tj
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000353 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1260
+%%EOF

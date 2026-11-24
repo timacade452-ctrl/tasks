@@ -1,0 +1,221 @@
+@model CourseDetailsViewModel
+@{
+    var course = Model.Course;
+    var openTasks = Math.Max(0, Model.TotalTasks - Model.CompletedTasks);
+}
+
+@section PageActions {
+    <a href="/Tasks/Create?courseId=@course.Id" class="btn btn-secondary btn-sm sm:h-10">
+        <i data-lucide="plus" class="h-4 w-4"></i>
+        Add task
+    </a>
+    <a href="/Pomodoro?courseId=@course.Id" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="play" class="h-4 w-4"></i>
+        Start focus
+    </a>
+}
+
+<div class="space-y-5">
+    <section class="card overflow-hidden">
+        <div class="h-2 w-full" style="background-color:@course.Color"></div>
+        <div class="card-pad">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div class="flex min-w-0 gap-4">
+                    <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style="background-color:@course.Color">
+                        <i data-lucide="@course.Icon" class="h-6 w-6"></i>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.1em]" style="color:@course.Color">@course.Code</p>
+                            <span class="chip bg-slate-50 text-slate-600 ring-slate-200">@course.Semester</span>
+                        </div>
+                        <h2 class="mt-1 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink-900">@course.Name</h2>
+                        <p class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-slate-500">
+                            <span class="inline-flex items-center gap-1.5"><i data-lucide="user-round" class="h-3.5 w-3.5 text-slate-400"></i>@course.Instructor</span>
+                            <span class="text-slate-300">·</span>
+                            <span class="inline-flex items-center gap-1.5"><i data-lucide="calendar-range" class="h-3.5 w-3.5 text-slate-400"></i>Added @DisplayHelpers.FriendlyDate(course.CreatedAt.ToLocalTime())</span>
+                        </p>
+                        @if (!string.IsNullOrWhiteSpace(course.Description))
+                        {
+                            <p class="mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-600">@course.Description</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 lg:shrink-0">
+                    <a href="/Courses/Edit/@course.Id" class="btn btn-secondary btn-sm">
+                        <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                        Edit
+                    </a>
+                    <form method="post" asp-controller="Courses" asp-action="Delete" asp-route-id="@course.Id"
+                          data-confirm="Delete @course.Code — @course.Name? Its materials, tasks and study plans will also be removed. This cannot be undone.">
+                        <button type="submit" class="btn btn-danger-soft btn-sm">
+                            <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
+                    @await Html.PartialAsync("_ProgressRing", new ProgressRingViewModel
+                    {
+                        Percent = Model.Progress,
+                        PrimaryText = $"{Model.Progress}%",
+                        SecondaryText = "tasks done",
+                        Size = 96,
+                        Color = course.Color
+                    })
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-medium text-slate-500">Course progress</p>
+                        <p class="mt-1 text-sm font-semibold text-ink-900">@Model.CompletedTasks of @Model.TotalTasks</p>
+                        <p class="mt-0.5 text-[11px] text-slate-500">@openTasks task@(openTasks == 1 ? "" : "s") still open</p>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <p class="text-[11px] font-medium text-slate-500">Study materials</p>
+                    <p class="mt-2 text-[24px] font-semibold leading-none tracking-[-0.03em] text-ink-900">@Model.MaterialsCount</p>
+                    <a href="#course-materials" class="mt-2 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand-600 hover:text-brand-700">
+                        Browse files <i data-lucide="arrow-down" class="h-3 w-3"></i>
+                    </a>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <p class="text-[11px] font-medium text-slate-500">Focus time</p>
+                    <p class="mt-2 text-[24px] font-semibold leading-none tracking-[-0.03em] text-ink-900">@DisplayHelpers.Hours(Model.FocusMinutes)<span class="text-sm font-medium text-slate-400"> hr</span></p>
+                    <p class="mt-2 text-[11.5px] text-slate-500">Logged in the focus timer</p>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <p class="text-[11px] font-medium text-slate-500">Next deadline</p>
+                    @if (Model.NextDeadline is not null)
+                    {
+                        var next = Model.NextDeadline;
+                        <a href="/Tasks/Details/@next.Id" class="mt-2 block truncate text-[13px] font-semibold text-ink-900 hover:text-brand-700" title="@next.Title">@next.Title</a>
+                        <p class="mt-1 text-[11.5px] font-medium @(next.IsOverdue ? "text-rose-600" : next.IsDueToday ? "text-amber-600" : "text-slate-500")">@DisplayHelpers.DueLabel(next.DueDate)</p>
+                    }
+                    else
+                    {
+                        <p class="mt-2 text-[13px] font-semibold text-emerald-600">All caught up</p>
+                        <p class="mt-1 text-[11.5px] text-slate-500">No open tasks for this course.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid gap-5 xl:grid-cols-5">
+        <section class="card xl:col-span-3" id="course-tasks">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Tasks</p>
+                    <p class="mt-0.5 text-xs text-slate-500">@openTasks open · @Model.CompletedTasks completed</p>
+                </div>
+                <a href="/Tasks/Create?courseId=@course.Id" class="btn btn-secondary btn-sm">
+                    <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                    Add task
+                </a>
+            </div>
+
+            @if (Model.Tasks.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "check-square-2",
+                        Title = "No tasks for this course",
+                        Text = "Add the next assignment, reading or exam revision block to keep the course moving.",
+                        ActionUrl = $"/Tasks/Create?courseId={course.Id}",
+                        ActionLabel = "Create a task"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var item in Model.Tasks)
+                    {
+                        var task = item.Task;
+                        var done = task.Status == AcademicTaskStatus.Completed;
+                        <div class="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:px-6">
+                            <form method="post" asp-controller="Tasks" asp-action="ToggleComplete" asp-route-id="@task.Id" asp-route-returnUrl="@($"/Courses/Details/{course.Id}")">
+                                <button type="submit" class="mt-0.5 flex h-5 w-5 items-center justify-center rounded-[6px] border @(done ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent hover:border-brand-500")" aria-label="Toggle @task.Title" title="Toggle complete">
+                                    <i data-lucide="check" class="h-3 w-3"></i>
+                                </button>
+                            </form>
+                            <div class="min-w-0 flex-1">
+                                <a href="/Tasks/Details/@task.Id" class="block truncate text-[13.5px] font-medium @(done ? "text-slate-400 line-through" : "text-ink-900 hover:text-brand-700")">@task.Title</a>
+                                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                    <span class="chip bg-white py-0.5 @DisplayHelpers.TypeBadge(task.Type)">@task.Type.DisplayName()</span>
+                                    <span class="@(task.IsOverdue ? "font-medium text-rose-600" : task.IsDueToday ? "font-medium text-amber-600" : "")">@DisplayHelpers.DueLabel(task.DueDate)</span>
+                                    <span class="text-slate-300">·</span>
+                                    <span>@DisplayHelpers.MinutesLabel(task.EstimatedMinutes) estimate</span>
+                                </div>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-1.5">
+                                <span class="chip hidden @DisplayHelpers.PriorityBadge(task.Priority) sm:inline-flex">@task.Priority.DisplayName()</span>
+                                <a href="/Tasks/Edit/@task.Id" class="icon-btn h-8 w-8" aria-label="Edit @task.Title" title="Edit">
+                                    <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card xl:col-span-2" id="course-materials">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Study materials</p>
+                    <p class="mt-0.5 text-xs text-slate-500">@Model.MaterialsCount file@(Model.MaterialsCount == 1 ? "" : "s") for this course</p>
+                </div>
+                <a href="/Materials/Upload" class="btn btn-secondary btn-sm">
+                    <i data-lucide="upload" class="h-3.5 w-3.5"></i>
+                    Upload
+                </a>
+            </div>
+
+            @if (Model.Materials.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "folder-open",
+                        Title = "No materials yet",
+                        Text = "Upload lecture slides, notes or briefs to build the course library.",
+                        ActionUrl = "/Materials/Upload",
+                        ActionLabel = "Upload material"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var material in Model.Materials)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:px-6">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset @DisplayHelpers.FileTone(material.FileExtension)">
+                                <i data-lucide="@DisplayHelpers.FileIcon(material.FileExtension)" class="h-4 w-4"></i>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <a href="/Materials/Preview/@material.Id" class="block truncate text-[13px] font-medium text-ink-900 hover:text-brand-700">@material.Title</a>
+                                <p class="mt-0.5 truncate text-[11px] text-slate-500">@material.Category.DisplayName() · @DisplayHelpers.FileSize(material.FileSizeBytes) · @DisplayHelpers.FriendlyDate(material.UploadedAt.ToLocalTime())</p>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-0.5">
+                                <a href="/Materials/Preview/@material.Id" class="icon-btn h-8 w-8" aria-label="Preview @material.Title" title="Preview">
+                                    <i data-lucide="eye" class="h-3.5 w-3.5"></i>
+                                </a>
+                                <a href="/Materials/Download/@material.Id" class="icon-btn h-8 w-8" aria-label="Download @material.Title" title="Download">
+                                    <i data-lucide="download" class="h-3.5 w-3.5"></i>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>

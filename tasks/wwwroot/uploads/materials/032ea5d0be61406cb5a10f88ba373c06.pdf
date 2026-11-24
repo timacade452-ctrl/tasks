@@ -1,0 +1,62 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 612 >>
+stream
+BT
+/F1 22 Tf
+72 718 Td
+(Course Project Brief ? Student Management Portal) Tj
+/F2 11 Tf
+0 -36 Td
+0 -19 Td
+(IT 413 Project Brief: Web Application Development) Tj
+0 -19 Td
+(Instructor: Eng SAID ABDIKHIM) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Project Requirements:) Tj
+0 -19 Td
+(- Implement ASP.NET Core 8 MVC with Razor views and Tailwind CSS) Tj
+0 -19 Td
+(- Full CRUD functionality for Courses, Tasks, and Study Materials) Tj
+0 -19 Td
+(- Client and server-side validation) Tj
+0 -19 Td
+(- In-memory or database persistence with Repository pattern) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Submission: Live demonstration in Room 6.) Tj
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000353 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1112
+%%EOF

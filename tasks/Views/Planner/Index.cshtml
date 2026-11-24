@@ -1,0 +1,272 @@
+@model PlannerViewModel
+@{
+    var form = Model.Form;
+    var dateQuery = Model.Date.ToString("yyyy-MM-dd");
+    var returnUrl = $"/Planner?date={dateQuery}";
+}
+
+@section PageActions {
+    <a href="/Planner" class="btn btn-secondary btn-sm sm:h-10">
+        <i data-lucide="calendar-check" class="h-4 w-4"></i>
+        Today
+    </a>
+    <a href="/Calendar?view=day&date=@dateQuery" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="calendar-days" class="h-4 w-4"></i>
+        Calendar view
+    </a>
+}
+
+<div class="space-y-5">
+    <section class="card card-pad">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/Planner?date=@Model.PreviousDate.ToString("yyyy-MM-dd")" class="icon-btn border border-slate-200" aria-label="Previous day" title="Previous day">
+                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </a>
+                <div class="min-w-0">
+                    <p class="text-[15px] font-semibold text-ink-900">@Model.DateLabel</p>
+                    <p class="mt-0.5 text-[11.5px] text-slate-500">@Model.Plans.Count plan@(Model.Plans.Count == 1 ? "" : "s") · @DisplayHelpers.MinutesLabel(Model.PlannedMinutes) blocked</p>
+                </div>
+                <a href="/Planner?date=@Model.NextDate.ToString("yyyy-MM-dd")" class="icon-btn border border-slate-200" aria-label="Next day" title="Next day">
+                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </a>
+            </div>
+            <a href="#plan-form" class="btn btn-secondary btn-sm self-start sm:self-auto">
+                <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                Add study block
+            </a>
+        </div>
+
+        <div class="mt-4 grid grid-cols-7 gap-1.5 sm:gap-2">
+            @foreach (var day in Model.WeekDays)
+            {
+                <a href="/Planner?date=@day.Date.ToString("yyyy-MM-dd")" class="group flex flex-col items-center rounded-xl border px-1 py-2.5 transition-colors @(day.IsSelected ? "border-brand-500 bg-brand-50" : day.IsToday ? "border-brand-200 bg-white hover:bg-brand-50/40" : "border-slate-200 bg-white hover:bg-slate-50")">
+                    <span class="text-[9.5px] font-semibold uppercase tracking-wide @(day.IsSelected ? "text-brand-700" : "text-slate-400")">@day.Date.ToString("ddd")</span>
+                    <span class="mt-1 flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-semibold @(day.IsSelected ? "bg-brand-600 text-white" : day.IsToday ? "bg-brand-50 text-brand-700" : "text-ink-900")">@day.Date.Day</span>
+                    <span class="mt-1.5 flex h-2 items-center gap-0.5">
+                        @for (var i = 0; i < Math.Min(3, day.PlanCount); i++)
+                        {
+                            <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+                        }
+                        @if (day.DeadlineCount > 0)
+                        {
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                        }
+                    </span>
+                </a>
+            }
+        </div>
+    </section>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <div class="space-y-5 xl:col-span-2">
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[15px] font-semibold text-ink-900">Day plan</p>
+                        <p class="mt-0.5 text-xs text-slate-500">Blocks are ordered by start time</p>
+                    </div>
+                    <span class="chip bg-slate-50 text-slate-600 ring-slate-200">
+                        <i data-lucide="clock-3" class="h-3 w-3"></i>
+                        @DisplayHelpers.MinutesLabel(Model.PlannedMinutes)
+                    </span>
+                </div>
+
+                @if (Model.Plans.Count == 0)
+                {
+                    <div class="p-5">
+                        @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                        {
+                            Icon = "calendar-plus",
+                            Title = "Nothing planned for this day",
+                            Text = "Block a lecture, study session or deadline so the day has a shape. Even a 25-minute block counts.",
+                            ActionUrl = "#plan-form",
+                            ActionLabel = "Add a study block"
+                        })
+                    </div>
+                }
+                else
+                {
+                    <div class="px-5 py-2 sm:px-6">
+                        @foreach (var item in Model.Plans)
+                        {
+                            var plan = item.Plan;
+                            var minutes = (int)(plan.End - plan.Start).TotalMinutes;
+                            var isNow = DateTime.Now >= plan.Start && DateTime.Now < plan.End;
+                            <div class="flex gap-3 border-b border-slate-100 py-4 last:border-0">
+                                <div class="flex w-14 shrink-0 flex-col pt-0.5 text-right">
+                                    <span class="text-[11.5px] font-semibold text-ink-900">@DisplayHelpers.Time(plan.Start)</span>
+                                    <span class="mt-0.5 text-[10px] text-slate-400">@DisplayHelpers.Time(plan.End)</span>
+                                </div>
+                                <div class="relative flex flex-col items-center">
+                                    <span class="mt-1 h-2.5 w-2.5 rounded-full @(isNow ? "bg-brand-600 ring-4 ring-brand-100" : DisplayHelpers.PlanDotClass(plan.Type))"></span>
+                                    <span class="mt-1 w-px flex-1 bg-slate-100"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-start justify-between gap-2">
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <p class="text-[13.5px] font-semibold text-ink-900">@plan.Title</p>
+                                                @if (isNow)
+                                                {
+                                                    <span class="chip bg-brand-50 text-brand-700 ring-brand-100">Now</span>
+                                                }
+                                            </div>
+                                            <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                                <span class="chip py-0.5 @DisplayHelpers.PlanSoftClass(plan.Type)">@plan.Type.DisplayName()</span>
+                                                @if (item.Course is not null)
+                                                {
+                                                    <a href="/Courses/Details/@item.Course.Id" class="inline-flex items-center gap-1.5 hover:text-brand-700">
+                                                        <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                                        @item.Course.Code
+                                                    </a>
+                                                }
+                                                <span class="inline-flex items-center gap-1"><i data-lucide="clock-3" class="h-3 w-3"></i>@minutes min</span>
+                                                @if (!string.IsNullOrWhiteSpace(plan.Location))
+                                                {
+                                                    <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="h-3 w-3"></i>@plan.Location</span>
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(plan.Description))
+                                            {
+                                                <p class="mt-2 text-[11.5px] leading-relaxed text-slate-500">@plan.Description</p>
+                                            }
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-0.5">
+                                            <a href="/Planner?date=@dateQuery&edit=@plan.Id#plan-form" class="icon-btn h-8 w-8" aria-label="Edit @plan.Title" title="Edit">
+                                                <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                                            </a>
+                                            <form method="post" asp-controller="Planner" asp-action="Delete" asp-route-id="@plan.Id" asp-route-date="@dateQuery"
+                                                  data-confirm="Remove “@plan.Title” from your plan?">
+                                                <button type="submit" class="icon-btn h-8 w-8 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete @plan.Title" title="Delete">
+                                                    <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[15px] font-semibold text-ink-900">Deadlines on this day</p>
+                        <p class="mt-0.5 text-xs text-slate-500">Tasks due @Model.Date.ToString("MMM d", CultureInfo.InvariantCulture)</p>
+                    </div>
+                    <a href="/Tasks" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">All tasks</a>
+                </div>
+
+                @if (Model.DueTasks.Count == 0)
+                {
+                    <p class="px-5 py-6 text-center text-[12px] text-slate-500">No task deadlines on this day — a good day for deep work.</p>
+                }
+                else
+                {
+                    <div class="divide-y divide-slate-100">
+                        @foreach (var item in Model.DueTasks)
+                        {
+                            var task = item.Task;
+                            var done = task.Status == AcademicTaskStatus.Completed;
+                            <div class="flex items-start gap-3 px-5 py-3.5 sm:px-6">
+                                <form method="post" asp-controller="Tasks" asp-action="ToggleComplete" asp-route-id="@task.Id" asp-route-returnUrl="@returnUrl">
+                                    <button type="submit" class="mt-0.5 flex h-5 w-5 items-center justify-center rounded-[6px] border @(done ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent hover:border-brand-500")" aria-label="Toggle @task.Title" title="Toggle complete">
+                                        <i data-lucide="check" class="h-3 w-3"></i>
+                                    </button>
+                                </form>
+                                <div class="min-w-0 flex-1">
+                                    <a href="/Tasks/Details/@task.Id" class="block truncate text-[13px] font-medium @(done ? "text-slate-400 line-through" : "text-ink-900 hover:text-brand-700")">@task.Title</a>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                        @if (item.Course is not null)
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                                @item.Course.Code
+                                            </span>
+                                            <span class="text-slate-300">·</span>
+                                        }
+                                        <span>@task.Type.DisplayName()</span>
+                                        <span class="text-slate-300">·</span>
+                                        <span>@DisplayHelpers.MinutesLabel(task.EstimatedMinutes)</span>
+                                    </div>
+                                </div>
+                                <span class="chip shrink-0 @DisplayHelpers.PriorityBadge(task.Priority)">@task.Priority.DisplayName()</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+
+        <aside class="space-y-5">
+            <section class="card card-pad" id="plan-form">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="@(form.IsEdit ? "pencil" : "calendar-plus")" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[14px] font-semibold text-ink-900">@(form.IsEdit ? "Edit study block" : "Add a study block")</h2>
+                        <p class="text-[10.5px] text-slate-500">@(form.IsEdit ? "Update the details and save." : "Reserve time for what matters.")</p>
+                    </div>
+                </div>
+
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors mt-4"></div>
+
+                @await Html.PartialAsync("_PlanForm", form)
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[13.5px] font-semibold text-ink-900">Coming up</p>
+                        <p class="mt-0.5 text-[11px] text-slate-500">Next scheduled blocks</p>
+                    </div>
+                </div>
+                @if (Model.Upcoming.Count == 0)
+                {
+                    <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">Nothing scheduled ahead. Add a block to get started.</p>
+                }
+                else
+                {
+                    <div class="divide-y divide-slate-100">
+                        @foreach (var item in Model.Upcoming)
+                        {
+                            <a href="/Planner?date=@item.Plan.Start.ToString("yyyy-MM-dd")" class="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-slate-50/70">
+                                <span class="mt-1 h-2 w-2 shrink-0 rounded-full @DisplayHelpers.PlanDotClass(item.Plan.Type)"></span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[12px] font-medium text-ink-900">@item.Plan.Title</span>
+                                    <span class="mt-0.5 block text-[10.5px] text-slate-500">@DisplayHelpers.FriendlyDate(item.Plan.Start) · @DisplayHelpers.Time(item.Plan.Start)</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var start = document.querySelector("[data-plan-start]");
+            var end = document.querySelector("[data-plan-end]");
+            if (!start || !end) return;
+
+            start.addEventListener("change", function () {
+                if (!start.value) return;
+                var parts = start.value.split(":");
+                if (parts.length !== 2) return;
+                var date = new Date(2000, 0, 1, Number(parts[0]), Number(parts[1]));
+                date.setMinutes(date.getMinutes() + 60);
+                var next = String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
+                if (!end.value || end.value <= start.value) end.value = next;
+            });
+        })();
+    </script>
+}

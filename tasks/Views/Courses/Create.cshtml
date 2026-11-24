@@ -1,0 +1,12 @@
+@model CourseFormViewModel
+
+<div class="mx-auto max-w-5xl">
+    <form method="post" asp-controller="Courses" asp-action="Create">
+        <input type="hidden" asp-for="Id" />
+        @await Html.PartialAsync("_Form", Model)
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

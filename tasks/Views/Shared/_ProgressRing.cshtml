@@ -1,0 +1,21 @@
+@model ProgressRingViewModel
+@{
+    const double circumference = 2 * Math.PI * 68;
+    var percent = Math.Clamp(Model.Percent, 0, 100);
+    var offset = circumference * (1 - percent / 100d);
+}
+<div class="relative inline-flex items-center justify-center" style="width:@(Model.Size)px;height:@(Model.Size)px">
+    <svg viewBox="0 0 160 160" class="h-full w-full timer-ring" aria-hidden="true">
+        <circle cx="80" cy="80" r="68" fill="none" stroke="#eef2f7" stroke-width="12"></circle>
+        <circle cx="80" cy="80" r="68" fill="none" stroke="@Model.Color" stroke-width="12" stroke-linecap="round"
+                stroke-dasharray="@circumference.ToString("0.##", CultureInfo.InvariantCulture)"
+                stroke-dashoffset="@offset.ToString("0.##", CultureInfo.InvariantCulture)"></circle>
+    </svg>
+    <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <span class="font-semibold tracking-[-0.02em] text-ink-900" style="font-size:@(Model.Size / 5.4)px">@Model.PrimaryText</span>
+        @if (!string.IsNullOrWhiteSpace(Model.SecondaryText))
+        {
+            <span class="mt-0.5 text-[11px] font-medium text-slate-500">@Model.SecondaryText</span>
+        }
+    </div>
+</div>

@@ -1,0 +1,293 @@
+@model AnalyticsViewModel
+@{
+    var monthTotal = Model.Last30Days.Sum(d => d.Minutes);
+    var totalCourseFocus = Model.CourseStats.Sum(c => c.FocusMinutes);
+    var todayPercent = DisplayHelpers.Percent(Model.Summary.TodayFocusMinutes, Model.Summary.DailyGoalMinutes);
+    var monthMax = Math.Max(60, Model.MaxMonthlyMinutes);
+}
+
+@section PageActions {
+    <a href="/Pomodoro" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="play" class="h-4 w-4"></i>
+        Start focus
+    </a>
+}
+
+<div class="space-y-5">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Total focus time",
+            Value = $"{DisplayHelpers.Hours(Model.Summary.TotalFocusMinutes):0.#} hr",
+            Caption = $"{Model.Summary.TotalSessions} sessions logged",
+            Icon = "clock-3",
+            Tone = "brand"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "This week",
+            Value = $"{DisplayHelpers.Hours(Model.WeekFocusMinutes):0.#} hr",
+            Caption = Model.WeekChangePercent == 0 ? "Same as last week" : $"{Model.WeekChangePercent:+0;-0}% vs last week",
+            Icon = Model.WeekChangePercent < 0 ? "trending-down" : "trending-up",
+            Tone = Model.WeekChangePercent < 0 ? "rose" : "emerald"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Today",
+            Value = DisplayHelpers.MinutesLabel(Model.Summary.TodayFocusMinutes),
+            Caption = $"{Model.Summary.TodaySessions} session{(Model.Summary.TodaySessions == 1 ? "" : "s")} · @todayPercent% of goal",
+            Icon = "sun",
+            Tone = "amber"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Study streak",
+            Value = $"{Model.Summary.Streak} day{(Model.Summary.Streak == 1 ? "" : "s")}",
+            Caption = Model.Summary.Streak > 1 ? "Keep the chain going" : "A session today starts it",
+            Icon = "flame",
+            Tone = "rose"
+        })
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card card-pad xl:col-span-2">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">This week's rhythm</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Focus minutes for the last seven days</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    @if (Model.WeekChangePercent != 0)
+                    {
+                        <span class="chip @(Model.WeekChangePercent > 0 ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-rose-50 text-rose-700 ring-rose-200")">
+                            <i data-lucide="@(Model.WeekChangePercent > 0 ? "trending-up" : "trending-down")" class="h-3 w-3"></i>
+                            @(Model.WeekChangePercent > 0 ? "+" : "")@Model.WeekChangePercent%
+                        </span>
+                    }
+                    <span class="text-[12px] font-semibold text-ink-900">@DisplayHelpers.Hours(Model.WeekFocusMinutes) hr</span>
+                </div>
+            </div>
+            <div class="mt-5">
+                @await Html.PartialAsync("_StudyBars", new StudyBarsViewModel { Points = Model.Last7Days, MaxMinutes = Model.MaxWeeklyMinutes })
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
+                <div>
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@DisplayHelpers.Hours(Model.AverageDailyMinutes * 7)<span class="text-[10px] font-medium text-slate-400"> hr</span></p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Weekly average pace</p>
+                </div>
+                <div class="border-x border-slate-100">
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@DisplayHelpers.Hours(Model.BestDayMinutes)<span class="text-[10px] font-medium text-slate-400"> hr</span></p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Best day · @Model.BestDayLabel</p>
+                </div>
+                <div>
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@Model.MostProductiveHourLabel</p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Most productive window</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card card-pad">
+            <p class="text-[15px] font-semibold text-ink-900">Daily goal</p>
+            <p class="mt-0.5 text-xs text-slate-500">@Model.Summary.DailyGoalMinutes minutes target</p>
+            <div class="mt-5 flex justify-center">
+                @await Html.PartialAsync("_ProgressRing", new ProgressRingViewModel
+                {
+                    Percent = todayPercent,
+                    PrimaryText = $"{todayPercent}%",
+                    SecondaryText = "of today's goal",
+                    Size = 148
+                })
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-2">
+                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Focused</p>
+                    <p class="mt-1 text-[13px] font-semibold text-ink-900">@DisplayHelpers.MinutesLabel(Model.Summary.TodayFocusMinutes)</p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Remaining</p>
+                    <p class="mt-1 text-[13px] font-semibold text-ink-900">@DisplayHelpers.MinutesLabel(Math.Max(0, Model.Summary.DailyGoalMinutes - Model.Summary.TodayFocusMinutes))</p>
+                </div>
+            </div>
+            <p class="mt-4 text-center text-[11px] leading-relaxed text-slate-500">
+                Average of <span class="font-medium text-ink-900">@DisplayHelpers.MinutesLabel(Model.AverageDailyMinutes)</span> per day over 30 days.
+            </p>
+        </section>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card card-pad xl:col-span-2">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">30-day trend</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Every bar is one day of focus time</p>
+                </div>
+                <span class="chip bg-slate-50 text-slate-600 ring-slate-200">@DisplayHelpers.Hours(monthTotal) hr total</span>
+            </div>
+
+            <div class="mt-5">
+                <div class="relative h-32">
+                    <div class="pointer-events-none absolute inset-0 flex flex-col justify-between">
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <span class="block border-t border-dashed border-slate-100"></span>
+                        }
+                    </div>
+                    <div class="relative flex h-full items-end gap-[3px]">
+                        @foreach (var point in Model.Last30Days)
+                        {
+                            var height = point.Minutes <= 0 ? 2 : Math.Max(4, (int)Math.Round(point.Minutes * 100d / monthMax));
+                            var isToday = point.Date == DateTime.Today;
+                            <div class="group relative flex h-full flex-1 items-end" title="@point.Date.ToString("ddd, MMM d") · @DisplayHelpers.MinutesLabel(point.Minutes) · @point.Sessions session(s)">
+                                <div class="w-full rounded-t-[3px] transition-colors @(point.Minutes <= 0 ? "bg-slate-200" : isToday ? "bg-brand-600" : "bg-brand-300 group-hover:bg-brand-500")" style="height:@(height)%"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="mt-2 flex gap-[3px]">
+                    @foreach (var point in Model.Last30Days)
+                    {
+                        <div class="min-w-0 flex-1 text-center">
+                            <span class="block truncate text-[9px] @(point.Date == DateTime.Today ? "font-semibold text-brand-700" : "text-slate-400")">
+                                @(point.Date == DateTime.Today || point.Date.Day % 5 == 0 ? point.Date.Day.ToString() : "")
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-3 gap-3 border-t border-slate-100 pt-4 text-center">
+                <div>
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@DisplayHelpers.MinutesLabel(Model.AverageDailyMinutes)</p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Average / day</p>
+                </div>
+                <div class="border-x border-slate-100">
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@DisplayHelpers.MinutesLabel(Model.BestDayMinutes)</p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Best day</p>
+                </div>
+                <div>
+                    <p class="text-[15px] font-semibold leading-none text-ink-900">@Model.Last30Days.Count(d => d.Minutes > 0)</p>
+                    <p class="mt-1 text-[10.5px] text-slate-500">Active days</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Task mix</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Completion by task type</p>
+                </div>
+            </div>
+            @if (Model.TaskTypes.Count == 0)
+            {
+                <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">Create a task to see the breakdown here.</p>
+            }
+            else
+            {
+                <div class="space-y-4 p-5">
+                    @foreach (var stat in Model.TaskTypes)
+                    {
+                        var percent = DisplayHelpers.Percent(stat.Completed, stat.Total);
+                        <div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="chip py-0.5 @DisplayHelpers.TypeBadge(stat.Type)">@stat.Type.DisplayName()</span>
+                                <span class="text-[11px] font-medium text-slate-500">@stat.Completed / @stat.Total</span>
+                            </div>
+                            <div class="progress mt-2">
+                                <span style="width:@(percent)%"></span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card xl:col-span-2">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Where the time goes</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Focus time and task progress by course</p>
+                </div>
+                <a href="/Courses" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Courses</a>
+            </div>
+
+            @if (Model.CourseStats.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "bar-chart-3",
+                        Title = "No course data yet",
+                        Text = "Add a course and log a focus session to see where your study time is going.",
+                        ActionUrl = "/Courses/Create",
+                        ActionLabel = "Create a course"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var stat in Model.CourseStats)
+                    {
+                        var share = DisplayHelpers.Percent(stat.FocusMinutes, totalCourseFocus);
+                        <div class="flex flex-wrap items-center gap-3 px-5 py-4 sm:px-6">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style="background-color:@stat.Course.Color">
+                                <i data-lucide="@stat.Course.Icon" class="h-4 w-4"></i>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a href="/Courses/Details/@stat.Course.Id" class="text-[13px] font-semibold text-ink-900 hover:text-brand-700">@stat.Course.Code</a>
+                                    <span class="truncate text-[11.5px] text-slate-500">@stat.Course.Name</span>
+                                </div>
+                                <div class="mt-1.5 flex items-center gap-3">
+                                    <div class="progress flex-1">
+                                        <span style="width:@(share)%;background-color:@stat.Course.Color"></span>
+                                    </div>
+                                    <span class="w-9 text-right text-[10.5px] font-medium text-slate-500">@share%</span>
+                                </div>
+                                <p class="mt-1 text-[10.5px] text-slate-400">@DisplayHelpers.Hours(stat.FocusMinutes) hr focus · @stat.Materials material@(stat.Materials == 1 ? "" : "s") · @stat.CompletedTasks/@stat.TotalTasks tasks</p>
+                            </div>
+                            <div class="shrink-0 text-right">
+                                <p class="text-[13px] font-semibold text-ink-900">@stat.Progress%</p>
+                                <p class="text-[9.5px] text-slate-400">tasks</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Recent activity</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Sessions, tasks and uploads</p>
+                </div>
+            </div>
+            @if (Model.RecentActivity.Count == 0)
+            {
+                <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">Nothing logged yet. Your activity will appear here.</p>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var activity in Model.RecentActivity)
+                    {
+                        <a href="@(activity.Url ?? "#")" class="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/70">
+                            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg @DisplayHelpers.ActivityTone(activity.Tone)">
+                                <i data-lucide="@activity.Icon" class="h-4 w-4"></i>
+                            </span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate text-[12.5px] font-medium text-ink-900">@activity.Title</span>
+                                <span class="mt-0.5 block truncate text-[11px] text-slate-500">@activity.Detail</span>
+                            </span>
+                            <span class="shrink-0 text-[10.5px] text-slate-400">@DisplayHelpers.RelativeTime(activity.When)</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>

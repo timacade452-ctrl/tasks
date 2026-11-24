@@ -1,0 +1,13 @@
+@model TaskFormViewModel
+
+<div class="mx-auto max-w-5xl">
+    <form method="post" asp-controller="Tasks" asp-action="Create">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ReturnUrl" />
+        @await Html.PartialAsync("_Form", Model)
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,209 @@
+@model UploadMaterialViewModel
+
+<div class="grid gap-5 xl:grid-cols-3">
+    <div class="xl:col-span-2">
+        <form method="post" asp-controller="Materials" asp-action="Upload" enctype="multipart/form-data" class="space-y-5" data-upload-form>
+            <section class="card card-pad">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="file-up" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-ink-900">Choose a file</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">PDF, Word or PowerPoint. Up to @Model.MaxFileSizeLabel.</p>
+                    </div>
+                </div>
+
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors mt-5"></div>
+
+                <div class="mt-5">
+                    <input asp-for="File" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" class="sr-only" data-file-input />
+                    <label for="File" class="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 px-6 py-10 text-center transition-colors hover:border-brand-300 hover:bg-brand-50/30" data-file-drop>
+                        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-slate-200">
+                            <i data-lucide="upload-cloud" class="h-6 w-6"></i>
+                        </span>
+                        <span class="mt-3 text-sm font-semibold text-ink-900" data-file-name>Click to choose a file</span>
+                        <span class="mt-1 text-xs text-slate-500" data-file-size>or drop it anywhere on this panel</span>
+                        <span class="mt-4 chip bg-white text-slate-600 ring-slate-200">
+                            <i data-lucide="shield-check" class="h-3 w-3 text-emerald-500"></i>
+                            Extension, size and file signature are checked
+                        </span>
+                    </label>
+                    <span asp-validation-for="File" class="field-validation-error"></span>
+                </div>
+            </section>
+
+            <section class="card card-pad">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="file-pen-line" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-ink-900">Describe the material</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">A clear title makes the library easier to scan later.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label asp-for="Title" class="label">Document title</label>
+                        <input asp-for="Title" class="input" placeholder="Lecture 12 — Graph algorithms" autocomplete="off" />
+                        <span asp-validation-for="Title" class="field-validation-error"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CourseId" class="label">Course</label>
+                        <select asp-for="CourseId" class="select">
+                            <option value="">Select a course…</option>
+                            @foreach (var course in Model.Courses)
+                            {
+                                <option value="@course.Id" selected="@(Model.CourseId == course.Id ? "selected" : null)">@course.Code — @course.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CourseId" class="field-validation-error"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Category" class="label">Category</label>
+                        <select asp-for="Category" class="select">
+                            @foreach (var category in Enum.GetValues<MaterialCategory>())
+                            {
+                                <option value="@category" selected="@(Model.Category == category ? "selected" : null)">@category.DisplayName()</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Category" class="field-validation-error"></span>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="Description" class="label">Description <span class="font-normal text-slate-400">(optional)</span></label>
+                        <textarea asp-for="Description" class="textarea" rows="4" placeholder="What is inside? Which topics or pages matter most?"></textarea>
+                        <span asp-validation-for="Description" class="field-validation-error"></span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-5">
+                    <button type="submit" class="btn btn-primary" data-upload-submit>
+                        <i data-lucide="upload" class="h-4 w-4"></i>
+                        <span data-upload-label>Upload material</span>
+                    </button>
+                    <a href="/Materials" class="btn btn-secondary">Cancel</a>
+                    @if (Model.Courses.Count == 0)
+                    {
+                        <a href="/Courses/Create" class="ml-auto text-[12px] font-medium text-brand-600 hover:text-brand-700">You need a course first — create one</a>
+                    }
+                </div>
+            </section>
+        </form>
+    </div>
+
+    <aside class="space-y-5">
+        <section class="card card-pad">
+            <h2 class="text-[15px] font-semibold text-ink-900">What you can upload</h2>
+            <div class="mt-4 space-y-2.5">
+                <div class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100"><i data-lucide="file-text" class="h-4 w-4"></i></span>
+                    <div>
+                        <p class="text-[12.5px] font-medium text-ink-900">PDF</p>
+                        <p class="text-[10.5px] text-slate-500">Previewed in the browser</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100"><i data-lucide="file-type-2" class="h-4 w-4"></i></span>
+                    <div>
+                        <p class="text-[12.5px] font-medium text-ink-900">Word</p>
+                        <p class="text-[10.5px] text-slate-500">.doc and .docx</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-100"><i data-lucide="presentation" class="h-4 w-4"></i></span>
+                    <div>
+                        <p class="text-[12.5px] font-medium text-ink-900">PowerPoint</p>
+                        <p class="text-[10.5px] text-slate-500">.ppt and .pptx</p>
+                    </div>
+                </div>
+            </div>
+            <p class="mt-4 text-[11.5px] leading-relaxed text-slate-500">
+                Maximum size is <span class="font-medium text-ink-900">@Model.MaxFileSizeLabel</span>. Files are stored locally under the demo uploads folder with a generated name.
+            </p>
+        </section>
+
+        <section class="card card-pad">
+            <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                <i data-lucide="info" class="h-3.5 w-3.5"></i>
+                Good to know
+            </div>
+            <ul class="mt-3 space-y-2.5 text-[12px] leading-relaxed text-slate-600">
+                <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> titles are limited to 140 characters</li>
+                <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> the original filename is kept for downloads</li>
+                <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> every upload is checked against allowed signatures</li>
+                <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> demo files reset when the app restarts</li>
+            </ul>
+        </section>
+    </aside>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var input = document.querySelector("[data-file-input]");
+            var name = document.querySelector("[data-file-name]");
+            var size = document.querySelector("[data-file-size]");
+            var drop = document.querySelector("[data-file-drop]");
+            var form = document.querySelector("[data-upload-form]");
+            var submit = document.querySelector("[data-upload-submit]");
+            var label = document.querySelector("[data-upload-label]");
+
+            function formatBytes(bytes) {
+                if (!bytes) return "0 KB";
+                var units = ["B", "KB", "MB", "GB"];
+                var value = bytes;
+                var unit = 0;
+                while (value >= 1024 && unit < units.length - 1) {
+                    value /= 1024;
+                    unit++;
+                }
+                return (unit === 0 ? value : value.toFixed(1)) + " " + units[unit];
+            }
+
+            function showFile() {
+                if (!input || !input.files || input.files.length === 0) {
+                    if (name) name.textContent = "Click to choose a file";
+                    if (size) size.textContent = "or drop it anywhere on this panel";
+                    return;
+                }
+                var file = input.files[0];
+                if (name) name.textContent = file.name;
+                if (size) size.textContent = formatBytes(file.size) + " · ready to upload";
+                drop?.classList.add("border-brand-300", "bg-brand-50/40");
+            }
+
+            input?.addEventListener("change", showFile);
+
+            ["dragenter", "dragover"].forEach(function (eventName) {
+                drop?.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    drop.classList.add("border-brand-300", "bg-brand-50/40");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(function (eventName) {
+                drop?.addEventListener(eventName, function () {
+                    drop.classList.remove("border-brand-300", "bg-brand-50/40");
+                });
+            });
+
+            form?.addEventListener("submit", function () {
+                if (submit) {
+                    submit.disabled = true;
+                    submit.classList.add("opacity-70");
+                }
+                if (label) label.textContent = "Uploading…";
+                window.setTimeout(function () {
+                    if (submit) {
+                        submit.disabled = false;
+                        submit.classList.remove("opacity-70");
+                    }
+                    if (label && document.body.contains(form)) label.textContent = "Upload material";
+                }, 15000);
+            });
+        })();
+    </script>
+}

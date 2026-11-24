@@ -1,0 +1,202 @@
+@model SettingsViewModel
+@{
+    var goalPresets = new[] { 60, 90, 120, 180, 240 };
+}
+
+<form method="post" asp-controller="Settings" asp-action="Update">
+    <div class="grid gap-5 xl:grid-cols-3">
+        <div class="space-y-5 xl:col-span-2">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <section class="card card-pad">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="target" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-ink-900">Daily study goal</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">A target you can actually hit on a normal day.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label asp-for="DailyGoalMinutes" class="label">Daily study goal</label>
+                        <div class="relative">
+                            <input asp-for="DailyGoalMinutes" type="number" min="15" max="600" step="15" class="input no-spinner pr-14" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[11px] font-medium text-slate-400">min / day</span>
+                        </div>
+                        <span asp-validation-for="DailyGoalMinutes" class="field-validation-error"></span>
+                        <p class="hint">Between 15 and 600 minutes.</p>
+                    </div>
+                    <div>
+                        <span class="label">Quick presets</span>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var preset in goalPresets)
+                            {
+                                <button type="button" class="chip bg-slate-50 text-slate-600 ring-slate-200 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-200" data-goal-preset="@preset">@preset min</button>
+                            }
+                        </div>
+                        <p class="hint">The dashboard ring and analytics percentages use this goal.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card card-pad">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="timer" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-ink-900">Pomodoro timings</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">These become the defaults for the focus timer.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label asp-for="FocusMinutes" class="label">Focus session</label>
+                        <div class="relative">
+                            <input asp-for="FocusMinutes" type="number" min="1" max="120" class="input no-spinner pr-12" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[11px] font-medium text-slate-400">min</span>
+                        </div>
+                        <span asp-validation-for="FocusMinutes" class="field-validation-error"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ShortBreakMinutes" class="label">Short break</label>
+                        <div class="relative">
+                            <input asp-for="ShortBreakMinutes" type="number" min="1" max="60" class="input no-spinner pr-12" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[11px] font-medium text-slate-400">min</span>
+                        </div>
+                        <span asp-validation-for="ShortBreakMinutes" class="field-validation-error"></span>
+                    </div>
+                    <div>
+                        <label asp-for="LongBreakMinutes" class="label">Long break</label>
+                        <div class="relative">
+                            <input asp-for="LongBreakMinutes" type="number" min="1" max="90" class="input no-spinner pr-12" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[11px] font-medium text-slate-400">min</span>
+                        </div>
+                        <span asp-validation-for="LongBreakMinutes" class="field-validation-error"></span>
+                    </div>
+                    <div>
+                        <label asp-for="LongBreakInterval" class="label">Long break after</label>
+                        <div class="relative">
+                            <input asp-for="LongBreakInterval" type="number" min="2" max="8" class="input no-spinner pr-14" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[11px] font-medium text-slate-400">sessions</span>
+                        </div>
+                        <span asp-validation-for="LongBreakInterval" class="field-validation-error"></span>
+                    </div>
+                </div>
+
+                <div class="mt-5 rounded-xl bg-slate-50 px-4 py-3">
+                    <p class="text-[11.5px] leading-relaxed text-slate-600">
+                        <span class="font-medium text-ink-900">Current rhythm:</span>
+                        @Model.FocusMinutes min focus · @Model.ShortBreakMinutes min short break · @Model.LongBreakMinutes min long break after every @Model.LongBreakInterval sessions.
+                    </p>
+                </div>
+            </section>
+
+            <section class="card card-pad">
+                <div class="flex items-start gap-3">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="sliders-horizontal" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-ink-900">Timer behaviour</h2>
+                        <p class="mt-0.5 text-xs text-slate-500">Small choices that make focus easier to start.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 divide-y divide-slate-100">
+                    <div class="flex items-start justify-between gap-4 py-4 first:pt-0">
+                        <div class="min-w-0">
+                            <p class="text-[13px] font-medium text-ink-900">Play a sound when a session ends</p>
+                            <p class="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">A short three-note chime, generated in the browser. No audio files needed.</p>
+                        </div>
+                        <label class="relative inline-flex shrink-0 cursor-pointer items-center" aria-label="Toggle session sound">
+                            <input asp-for="SoundEnabled" type="checkbox" class="peer sr-only" />
+                            <span class="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-brand-600"></span>
+                            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-start justify-between gap-4 py-4 last:pb-0">
+                        <div class="min-w-0">
+                            <p class="text-[13px] font-medium text-ink-900">Automatically start breaks</p>
+                            <p class="mt-0.5 text-[11.5px] leading-relaxed text-slate-500">When a focus session completes, the break starts counting down immediately.</p>
+                        </div>
+                        <label class="relative inline-flex shrink-0 cursor-pointer items-center" aria-label="Toggle automatic breaks">
+                            <input asp-for="AutoStartBreaks" type="checkbox" class="peer sr-only" />
+                            <span class="h-6 w-11 rounded-full bg-slate-200 transition-colors peer-checked:bg-brand-600"></span>
+                            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="space-y-5">
+            <section class="card card-pad">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white" style="background-color:@Model.Profile.AvatarColor">
+                        @Model.Profile.Initials
+                    </span>
+                    <div class="min-w-0">
+                        <p class="truncate text-[13.5px] font-semibold text-ink-900">@Model.Profile.FullName</p>
+                        <p class="truncate text-[11px] text-slate-500">@Model.Profile.Email</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Study streak</p>
+                        <p class="mt-1 text-[13px] font-semibold text-ink-900">@Model.Summary.Streak day@(Model.Summary.Streak == 1 ? "" : "s")</p>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Total focus</p>
+                        <p class="mt-1 text-[13px] font-semibold text-ink-900">@DisplayHelpers.Hours(Model.Summary.TotalFocusMinutes) hr</p>
+                    </div>
+                </div>
+
+                <a href="/Profile" class="mt-3 inline-flex items-center gap-1 text-[11.5px] font-medium text-brand-600 hover:text-brand-700">
+                    Edit your profile <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </a>
+            </section>
+
+            <section class="card card-pad">
+                <h2 class="text-[13.5px] font-semibold text-ink-900">How saving works</h2>
+                <ul class="mt-3 space-y-2.5 text-[11.5px] leading-relaxed text-slate-600">
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> Saving updates the timer defaults across the app.</li>
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> Inline timer changes in your browser stay until these defaults change.</li>
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> The demo workspace resets when the app restarts.</li>
+                </ul>
+            </section>
+
+            <section class="card card-pad">
+                <div class="flex flex-col gap-2">
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i data-lucide="save" class="h-4 w-4"></i>
+                        Save settings
+                    </button>
+                    <a href="/Settings" class="btn btn-secondary w-full">Discard changes</a>
+                </div>
+                <p class="mt-3 text-center text-[10.5px] text-slate-400">Changes apply to this demo account only.</p>
+            </section>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var input = document.getElementById("DailyGoalMinutes");
+            if (!input) return;
+            document.querySelectorAll("[data-goal-preset]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    input.value = button.getAttribute("data-goal-preset");
+                    input.focus();
+                });
+            });
+        })();
+    </script>
+}

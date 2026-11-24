@@ -1,0 +1,309 @@
+@model CalendarViewModel
+@{
+    var anchorQuery = Model.Anchor.ToString("yyyy-MM-dd");
+    var views = new[]
+    {
+        (Key: "month", Label: "Month", Icon: "calendar", Active: Model.View == "month"),
+        (Key: "week", Label: "Week", Icon: "calendar-range", Active: Model.View == "week"),
+        (Key: "day", Label: "Day", Icon: "calendar-days", Active: Model.View == "day")
+    };
+    var weekDayNames = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+}
+
+@section PageActions {
+    <a href="/Planner?date=@anchorQuery" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="calendar-plus" class="h-4 w-4"></i>
+        Open planner
+    </a>
+}
+
+<div class="space-y-5">
+    <section class="card card-pad">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/Calendar?view=@Model.View&date=@Model.PreviousAnchor.ToString("yyyy-MM-dd")" class="icon-btn border border-slate-200" aria-label="Previous period" title="Previous">
+                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </a>
+                <div class="min-w-0">
+                    <h2 class="truncate text-[17px] font-semibold tracking-[-0.01em] text-ink-900">@Model.Title</h2>
+                    <p class="mt-0.5 text-[11.5px] text-slate-500">@Model.MonthPlanCount plan@(Model.MonthPlanCount == 1 ? "" : "s") · @Model.MonthDeadlineCount deadline@(Model.MonthDeadlineCount == 1 ? "" : "s") in view</p>
+                </div>
+                <a href="/Calendar?view=@Model.View&date=@Model.NextAnchor.ToString("yyyy-MM-dd")" class="icon-btn border border-slate-200" aria-label="Next period" title="Next">
+                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </a>
+                <a href="/Calendar?view=@Model.View" class="btn btn-secondary btn-sm ml-1">Today</a>
+            </div>
+
+            <div class="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                @foreach (var view in views)
+                {
+                    <a href="/Calendar?view=@view.Key&date=@anchorQuery" class="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-medium transition-colors @(view.Active ? "bg-white text-ink-900 shadow-sm" : "text-slate-500 hover:text-ink-900")">
+                        <i data-lucide="@view.Icon" class="h-3.5 w-3.5"></i>
+                        @view.Label
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+
+    @if (Model.View == "month")
+    {
+        <section class="card overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-2.5">
+                <p class="text-[11px] font-medium text-slate-500 sm:hidden">Swipe horizontally to see the full week</p>
+                <p class="hidden text-[11px] font-medium text-slate-500 sm:block">Click any day to open the planner for that date</p>
+                <a href="/Planner?date=@anchorQuery" class="text-[11.5px] font-medium text-brand-600 hover:text-brand-700">Add a study block</a>
+            </div>
+            <div class="overflow-x-auto">
+                <div class="min-w-[760px]">
+                    <div class="grid grid-cols-7 border-b border-slate-100 bg-slate-50/70">
+                        @foreach (var dayName in weekDayNames)
+                        {
+                            <div class="px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">@dayName</div>
+                        }
+                    </div>
+                    <div class="grid grid-cols-7">
+                        @foreach (var day in Model.Days)
+                        {
+                            var shown = Math.Min(2, day.Plans.Count);
+                            var shownDeadlines = Math.Min(1, day.Deadlines.Count);
+                            var hiddenCount = day.TotalItems - shown - shownDeadlines;
+                            <div class="calendar-cell @(day.IsCurrentMonth ? "bg-white" : "bg-slate-50/40")">
+                                <div class="flex items-center justify-between">
+                                    <a href="/Calendar?view=day&date=@day.Date.ToString("yyyy-MM-dd")" class="flex h-6 w-6 items-center justify-center rounded-full text-[11.5px] font-semibold transition-colors @(day.IsToday ? "bg-brand-600 text-white" : day.IsCurrentMonth ? "text-ink-900 hover:bg-slate-100" : "text-slate-400 hover:bg-slate-100")">
+                                        @day.Date.Day
+                                    </a>
+                                    @if (day.IsToday)
+                                    {
+                                        <span class="text-[9px] font-semibold uppercase tracking-wide text-brand-600">Today</span>
+                                    }
+                                    else if (day.TotalItems > 0)
+                                    {
+                                        <span class="text-[9px] font-medium text-slate-400">@day.TotalItems</span>
+                                    }
+                                </div>
+
+                                <div class="mt-1.5 space-y-1">
+                                    @foreach (var plan in day.Plans.Take(shown))
+                                    {
+                                        <a href="/Planner?date=@day.Date.ToString("yyyy-MM-dd")" class="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[10px] transition-colors hover:bg-slate-100" title="@plan.Plan.Title · @DisplayHelpers.Time(plan.Plan.Start)">
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full @DisplayHelpers.PlanDotClass(plan.Plan.Type)"></span>
+                                            <span class="shrink-0 tabular-nums text-slate-400">@plan.Plan.Start.ToString("HH:mm")</span>
+                                            <span class="truncate font-medium text-slate-600">@plan.Plan.Title</span>
+                                        </a>
+                                    }
+                                    @foreach (var deadline in day.Deadlines.Take(shownDeadlines))
+                                    {
+                                        <a href="/Tasks/Details/@deadline.Task.Id" class="flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[10px] transition-colors hover:bg-amber-50" title="@deadline.Task.Title · due this day">
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"></span>
+                                            <span class="truncate font-medium text-amber-700">@deadline.Task.Title</span>
+                                        </a>
+                                    }
+                                    @if (hiddenCount > 0)
+                                    {
+                                        <a href="/Calendar?view=day&date=@day.Date.ToString("yyyy-MM-dd")" class="block px-1 text-[9.5px] font-medium text-brand-600 hover:text-brand-700">+@hiddenCount more</a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-[11px] text-slate-500">
+            <span class="font-medium text-slate-600">Legend</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-500"></span>Study session</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span>Lecture</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span>Exam</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Deadline</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-violet-500"></span>Course activity</span>
+        </div>
+    }
+    else if (Model.View == "week")
+    {
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
+            @foreach (var day in Model.WeekDays)
+            {
+                <section class="card flex flex-col overflow-hidden">
+                    <a href="/Calendar?view=day&date=@day.Date.ToString("yyyy-MM-dd")" class="flex items-center justify-between border-b border-slate-100 px-3 py-2.5 transition-colors hover:bg-slate-50 @(day.IsToday ? "bg-brand-50/60" : "")">
+                        <div>
+                            <p class="text-[9.5px] font-semibold uppercase tracking-wide @(day.IsToday ? "text-brand-700" : "text-slate-400")">@day.Date.ToString("ddd")</p>
+                            <p class="mt-0.5 text-[15px] font-semibold @(day.IsToday ? "text-brand-700" : "text-ink-900")">@day.Date.Day</p>
+                        </div>
+                        <span class="chip py-0.5 @(day.TotalItems > 0 ? "bg-slate-50 text-slate-600 ring-slate-200" : "bg-white text-slate-400 ring-slate-200")">@day.TotalItems</span>
+                    </a>
+                    <div class="flex-1 space-y-1.5 p-2.5">
+                        @if (day.TotalItems == 0)
+                        {
+                            <p class="px-1 py-4 text-center text-[10.5px] text-slate-400">Nothing scheduled</p>
+                        }
+                        else
+                        {
+                            @foreach (var plan in day.Plans)
+                            {
+                                <a href="/Planner?date=@day.Date.ToString("yyyy-MM-dd")" class="block rounded-lg border border-slate-200 px-2 py-1.5 transition-colors hover:border-slate-300 hover:bg-slate-50">
+                                    <span class="flex items-center gap-1.5">
+                                        <span class="h-1.5 w-1.5 shrink-0 rounded-full @DisplayHelpers.PlanDotClass(plan.Plan.Type)"></span>
+                                        <span class="text-[9.5px] font-medium tabular-nums text-slate-400">@plan.Plan.Start.ToString("HH:mm")</span>
+                                    </span>
+                                    <span class="mt-1 block text-[10.5px] font-medium leading-snug text-ink-900">@plan.Plan.Title</span>
+                                </a>
+                            }
+                            @foreach (var deadline in day.Deadlines)
+                            {
+                                <a href="/Tasks/Details/@deadline.Task.Id" class="block rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1.5 transition-colors hover:bg-amber-50">
+                                    <span class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                                        <i data-lucide="flag" class="h-3 w-3"></i> Due
+                                    </span>
+                                    <span class="mt-0.5 block text-[10.5px] font-medium leading-snug text-amber-900">@deadline.Task.Title</span>
+                                </a>
+                            }
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+    else
+    {
+        var day = Model.SelectedDay;
+        <div class="grid gap-5 xl:grid-cols-3">
+            <section class="card xl:col-span-2">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[15px] font-semibold text-ink-900">@day.Date.ToString("dddd, MMMM d, yyyy", CultureInfo.InvariantCulture)</p>
+                        <p class="mt-0.5 text-xs text-slate-500">@day.Plans.Count plan@(day.Plans.Count == 1 ? "" : "s") · @day.Deadlines.Count deadline@(day.Deadlines.Count == 1 ? "" : "s")</p>
+                    </div>
+                    <a href="/Planner?date=@day.Date.ToString("yyyy-MM-dd")" class="btn btn-secondary btn-sm">
+                        <i data-lucide="calendar-plus" class="h-3.5 w-3.5"></i>
+                        Add block
+                    </a>
+                </div>
+
+                @if (day.TotalItems == 0)
+                {
+                    <div class="p-5">
+                        @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                        {
+                            Icon = "calendar",
+                            Title = "A clear day",
+                            Text = "Nothing is scheduled. Use the planner to block a focused study session or a proper break.",
+                            ActionUrl = $"/Planner?date={day.Date:yyyy-MM-dd}",
+                            ActionLabel = "Plan this day"
+                        })
+                    </div>
+                }
+                else
+                {
+                    <div class="px-5 py-2 sm:px-6">
+                        @foreach (var item in day.Plans)
+                        {
+                            var plan = item.Plan;
+                            var minutes = (int)(plan.End - plan.Start).TotalMinutes;
+                            <div class="flex gap-3 border-b border-slate-100 py-4">
+                                <div class="flex w-14 shrink-0 flex-col pt-0.5 text-right">
+                                    <span class="text-[11.5px] font-semibold text-ink-900">@DisplayHelpers.Time(plan.Start)</span>
+                                    <span class="mt-0.5 text-[10px] text-slate-400">@DisplayHelpers.Time(plan.End)</span>
+                                </div>
+                                <div class="relative flex flex-col items-center">
+                                    <span class="mt-1 h-2.5 w-2.5 rounded-full @DisplayHelpers.PlanDotClass(plan.Type)"></span>
+                                    <span class="mt-1 w-px flex-1 bg-slate-100"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <p class="text-[13.5px] font-semibold text-ink-900">@plan.Title</p>
+                                        <span class="chip py-0.5 @DisplayHelpers.PlanSoftClass(plan.Type)">@plan.Type.DisplayName()</span>
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                        @if (item.Course is not null)
+                                        {
+                                            <a href="/Courses/Details/@item.Course.Id" class="inline-flex items-center gap-1.5 font-medium hover:text-brand-700">
+                                                <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                                @item.Course.Code
+                                            </a>
+                                            <span class="text-slate-300">·</span>
+                                        }
+                                        <span>@minutes min</span>
+                                        @if (!string.IsNullOrWhiteSpace(plan.Location))
+                                        {
+                                            <span class="text-slate-300">·</span>
+                                            <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="h-3 w-3"></i>@plan.Location</span>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(plan.Description))
+                                    {
+                                        <p class="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">@plan.Description</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @foreach (var deadline in day.Deadlines)
+                        {
+                            var task = deadline.Task;
+                            <div class="flex gap-3 border-b border-slate-100 py-4 last:border-0">
+                                <div class="flex w-14 shrink-0 flex-col pt-0.5 text-right">
+                                    <span class="text-[11.5px] font-semibold text-amber-600">Due</span>
+                                    <span class="mt-0.5 text-[10px] text-slate-400">@task.DueDate.ToString("MMM d")</span>
+                                </div>
+                                <div class="relative flex flex-col items-center">
+                                    <span class="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <a href="/Tasks/Details/@task.Id" class="text-[13.5px] font-semibold text-ink-900 hover:text-brand-700">@task.Title</a>
+                                        <span class="chip py-0.5 @DisplayHelpers.PriorityBadge(task.Priority)">@task.Priority.DisplayName()</span>
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                        @if (deadline.Course is not null)
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <span class="h-1.5 w-1.5 rounded-full" style="background-color:@deadline.Course.Color"></span>
+                                                @deadline.Course.Code
+                                            </span>
+                                            <span class="text-slate-300">·</span>
+                                        }
+                                        <span>@task.Type.DisplayName()</span>
+                                        <span class="text-slate-300">·</span>
+                                        <span>@DisplayHelpers.MinutesLabel(task.EstimatedMinutes) estimate</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <aside class="space-y-5">
+                <section class="card card-pad">
+                    <h2 class="text-[13.5px] font-semibold text-ink-900">This week</h2>
+                    <div class="mt-3 space-y-1.5">
+                        @foreach (var weekDay in Model.WeekDays)
+                        {
+                            <a href="/Calendar?view=day&date=@weekDay.Date.ToString("yyyy-MM-dd")" class="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors @(weekDay.Date == day.Date ? "bg-brand-50 text-brand-700" : "hover:bg-slate-50")">
+                                <span class="w-8 text-[10px] font-semibold uppercase tracking-wide @(weekDay.Date == day.Date ? "text-brand-700" : "text-slate-400")">@weekDay.Date.ToString("ddd")</span>
+                                <span class="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium @(weekDay.IsToday ? "bg-brand-600 text-white" : "")">@weekDay.Date.Day</span>
+                                <span class="ml-auto text-[10.5px] text-slate-400">@weekDay.TotalItems item@(weekDay.TotalItems == 1 ? "" : "s")</span>
+                            </a>
+                        }
+                    </div>
+                </section>
+
+                <section class="card card-pad">
+                    <h2 class="text-[13.5px] font-semibold text-ink-900">Quick links</h2>
+                    <div class="mt-3 space-y-2">
+                        <a href="/Planner?date=@day.Date.ToString("yyyy-MM-dd")" class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-50">
+                            <i data-lucide="calendar-plus" class="h-4 w-4 text-slate-400"></i>Plan this day
+                        </a>
+                        <a href="/Tasks/Create" class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-50">
+                            <i data-lucide="check-square-2" class="h-4 w-4 text-slate-400"></i>Create a task
+                        </a>
+                        <a href="/Pomodoro" class="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-50">
+                            <i data-lucide="timer" class="h-4 w-4 text-slate-400"></i>Start a focus session
+                        </a>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    }
+</div>

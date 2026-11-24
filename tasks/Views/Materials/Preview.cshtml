@@ -1,0 +1,193 @@
+@model MaterialPreviewViewModel
+@{
+    var material = Model.Material;
+    var kind = FileTypes.KindLabel(material.FileExtension);
+}
+
+@section PageActions {
+    <a href="/Materials" class="btn btn-secondary btn-sm sm:h-10">
+        <i data-lucide="arrow-left" class="h-4 w-4"></i>
+        Library
+    </a>
+    <a href="/Materials/Download/@material.Id" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="download" class="h-4 w-4"></i>
+        Download
+    </a>
+}
+
+<div class="space-y-5">
+    <section class="card card-pad">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex min-w-0 gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset @DisplayHelpers.FileTone(material.FileExtension)">
+                    <i data-lucide="@DisplayHelpers.FileIcon(material.FileExtension)" class="h-5 w-5"></i>
+                </span>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if (Model.Course is not null)
+                        {
+                            <a href="/Courses/Details/@Model.Course.Id" class="chip bg-slate-50 text-slate-600 ring-slate-200">
+                                <span class="h-1.5 w-1.5 rounded-full" style="background-color:@Model.Course.Color"></span>
+                                @Model.Course.Code
+                            </a>
+                        }
+                        <span class="chip bg-slate-50 text-slate-600 ring-slate-200">@material.Category.DisplayName()</span>
+                        <span class="chip bg-slate-50 text-slate-600 ring-slate-200">@kind</span>
+                    </div>
+                    <h2 class="mt-2 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-ink-900">@material.Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(material.Description))
+                    {
+                        <p class="mt-1.5 max-w-3xl text-[13px] leading-relaxed text-slate-600">@material.Description</p>
+                    }
+                    <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-slate-500">
+                        <span>Uploaded @DisplayHelpers.DateTimeLabel(material.UploadedAt.ToLocalTime())</span>
+                        <span class="text-slate-300">·</span>
+                        <span>@DisplayHelpers.FileSize(material.FileSizeBytes)</span>
+                        <span class="text-slate-300">·</span>
+                        <span class="truncate">@material.OriginalFileName</span>
+                        @if (Model.Course is not null)
+                        {
+                            <span class="text-slate-300">·</span>
+                            <span>@Model.Course.Name</span>
+                        }
+                    </p>
+                </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <form method="post" asp-controller="Materials" asp-action="Delete" asp-route-id="@material.Id" asp-route-returnUrl="/Materials"
+                      data-confirm="Delete “@material.Title”? The stored file will be removed from the demo workspace.">
+                    <button type="submit" class="btn btn-danger-soft btn-sm" aria-label="Delete material">
+                        <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid gap-5 xl:grid-cols-4">
+        <section class="card overflow-hidden xl:col-span-3">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-5">
+                <div class="flex min-w-0 items-center gap-2">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white text-slate-500 ring-1 ring-slate-200">
+                        <i data-lucide="@(material.IsPdf ? "file-text" : "file")" class="h-3.5 w-3.5"></i>
+                    </span>
+                    <p class="truncate text-[12px] font-medium text-ink-900">@material.OriginalFileName</p>
+                </div>
+                <div class="flex shrink-0 items-center gap-1">
+                    <a href="/Materials/File/@material.Id" target="_blank" rel="noopener" class="icon-btn h-8 w-8" title="Open in a new tab" aria-label="Open in a new tab">
+                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                    </a>
+                    <a href="/Materials/Download/@material.Id" class="icon-btn h-8 w-8" title="Download" aria-label="Download">
+                        <i data-lucide="download" class="h-3.5 w-3.5"></i>
+                    </a>
+                </div>
+            </div>
+
+            @if (material.IsPdf)
+            {
+                <div class="bg-slate-100/60">
+                    <iframe src="/Materials/File/@material.Id" title="Preview of @material.Title"
+                            class="h-[calc(100vh-330px)] min-h-[460px] w-full border-0 bg-white"></iframe>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-4 py-2.5 text-[11px] text-slate-500 sm:px-5">
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="move-vertical" class="h-3.5 w-3.5"></i>Scroll inside the viewer to read the full document</span>
+                    <a href="/Materials/File/@material.Id" target="_blank" rel="noopener" class="font-medium text-brand-600 hover:text-brand-700">Open full screen</a>
+                </div>
+            }
+            else
+            {
+                <div class="px-6 py-14">
+                    <div class="mx-auto flex max-w-md flex-col items-center text-center">
+                        <span class="flex h-14 w-14 items-center justify-center rounded-2xl ring-1 ring-inset @DisplayHelpers.FileTone(material.FileExtension)">
+                            <i data-lucide="@DisplayHelpers.FileIcon(material.FileExtension)" class="h-7 w-7"></i>
+                        </span>
+                        <p class="mt-4 text-base font-semibold text-ink-900">In-browser preview is available for PDFs</p>
+                        <p class="mt-1.5 text-[12.5px] leading-relaxed text-slate-500">
+                            This @kind file is stored safely. Download it to open in your word processor or presentation app.
+                        </p>
+                        <a href="/Materials/Download/@material.Id" class="btn btn-primary btn-sm mt-5">
+                            <i data-lucide="download" class="h-4 w-4"></i>
+                            Download @kind file
+                        </a>
+                        <p class="mt-3 text-[11px] text-slate-400">@material.OriginalFileName · @DisplayHelpers.FileSize(material.FileSizeBytes)</p>
+                    </div>
+                </div>
+            }
+        </section>
+
+        <aside class="space-y-5 xl:col-span-1">
+            <section class="card card-pad">
+                <h2 class="text-[13.5px] font-semibold text-ink-900">Details</h2>
+                <dl class="mt-4 space-y-3 text-[12px]">
+                    <div class="flex items-start justify-between gap-3">
+                        <dt class="text-slate-500">Course</dt>
+                        <dd class="text-right font-medium text-ink-900">
+                            @if (Model.Course is not null)
+                            {
+                                <a href="/Courses/Details/@Model.Course.Id" class="inline-flex items-center gap-1.5 hover:text-brand-700">
+                                    <span class="h-1.5 w-1.5 rounded-full" style="background-color:@Model.Course.Color"></span>
+                                    @Model.Course.Code
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-slate-400">None</span>
+                            }
+                        </dd>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <dt class="text-slate-500">Category</dt>
+                        <dd class="text-right font-medium text-ink-900">@material.Category.DisplayName()</dd>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <dt class="text-slate-500">File type</dt>
+                        <dd class="text-right font-medium text-ink-900">@kind <span class="text-slate-400">@material.FileExtension</span></dd>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <dt class="text-slate-500">Size</dt>
+                        <dd class="text-right font-medium text-ink-900">@DisplayHelpers.FileSize(material.FileSizeBytes)</dd>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <dt class="text-slate-500">Uploaded</dt>
+                        <dd class="text-right font-medium text-ink-900">@DisplayHelpers.FriendlyDate(material.UploadedAt.ToLocalTime())</dd>
+                    </div>
+                </dl>
+                <div class="mt-4 rounded-lg bg-slate-50 px-3 py-2.5">
+                    <p class="break-all text-[10.5px] leading-relaxed text-slate-500">@material.OriginalFileName</p>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[13.5px] font-semibold text-ink-900">More from this course</p>
+                        <p class="mt-0.5 text-[11px] text-slate-500">@Model.Related.Count related file@(Model.Related.Count == 1 ? "" : "s")</p>
+                    </div>
+                </div>
+                @if (Model.Related.Count == 0)
+                {
+                    <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">No other materials for this course yet.</p>
+                }
+                else
+                {
+                    <div class="divide-y divide-slate-100">
+                        @foreach (var related in Model.Related)
+                        {
+                            <a href="/Materials/Preview/@related.Material.Id" class="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50/70">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset @DisplayHelpers.FileTone(related.Material.FileExtension)">
+                                    <i data-lucide="@DisplayHelpers.FileIcon(related.Material.FileExtension)" class="h-3.5 w-3.5"></i>
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[12px] font-medium text-ink-900">@related.Material.Title</span>
+                                    <span class="mt-0.5 block text-[10.5px] text-slate-500">@related.Material.Category.DisplayName() · @DisplayHelpers.FileSize(related.Material.FileSizeBytes)</span>
+                                </span>
+                                <i data-lucide="chevron-right" class="h-3.5 w-3.5 shrink-0 text-slate-300"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+</div>

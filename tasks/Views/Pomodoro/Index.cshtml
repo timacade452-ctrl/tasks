@@ -1,0 +1,302 @@
+@model PomodoroViewModel
+@{
+    var goalPercent = DisplayHelpers.Percent(Model.Summary.TodayFocusMinutes, Model.Profile.DailyGoalMinutes);
+    var circumference = (2 * Math.PI * 132).ToString("0.##", CultureInfo.InvariantCulture);
+}
+
+<div id="pomodoroPage" class="space-y-5">
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card overflow-hidden xl:col-span-2">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5 sm:px-6">
+                <div class="flex items-center gap-2.5">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                        <i data-lucide="timer" class="h-4 w-4"></i>
+                    </span>
+                    <div>
+                        <p class="text-[13.5px] font-semibold text-ink-900">Focus timer</p>
+                        <p class="text-[10.5px] text-slate-500">Survives page navigation — your session keeps running.</p>
+                    </div>
+                </div>
+                <span class="chip bg-brand-50 text-brand-700 ring-brand-100" data-phase-badge>Focus session</span>
+            </div>
+
+            <div class="flex flex-col items-center px-5 pb-6 pt-7 sm:px-6">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400" data-timer-status>Ready</p>
+
+                <div class="relative mt-4 h-[280px] w-[280px] max-w-full">
+                    <svg viewBox="0 0 280 280" class="timer-ring h-full w-full" aria-hidden="true">
+                        <circle cx="140" cy="140" r="132" fill="none" stroke="#eef2f7" stroke-width="11"></circle>
+                        <circle cx="140" cy="140" r="132" fill="none" stroke="#4f46e5" stroke-width="11" stroke-linecap="round"
+                                stroke-dasharray="@circumference" stroke-dashoffset="0" data-timer-ring></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
+                        <p class="timer-display text-[54px] font-semibold leading-none text-ink-900" data-timer-display>@Model.Profile.FocusMinutes:00</p>
+                        <p class="mt-2 text-[12px] font-medium text-slate-500" data-timer-phase>Focus session</p>
+                        <p class="mt-3 max-w-[176px] truncate rounded-full bg-slate-50 px-3 py-1 text-[10.5px] font-medium text-slate-500" data-timer-context>General study</p>
+                    </div>
+                </div>
+
+                <div class="mt-7 flex flex-wrap items-center justify-center gap-2">
+                    <button type="button" class="btn btn-primary h-11 min-w-[150px] px-5" data-timer-action="toggle">
+                        <i data-lucide="play" class="h-4 w-4" data-icon-play></i>
+                        <i data-lucide="pause" class="hidden h-4 w-4" data-icon-pause></i>
+                        <span data-start-label>Start focus</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary h-11" data-timer-action="reset" title="Reset timer" aria-label="Reset timer">
+                        <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary h-11" data-timer-action="skip" title="Skip phase" aria-label="Skip phase">
+                        <i data-lucide="skip-forward" class="h-4 w-4"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary h-11" data-timer-action="focus-mode" title="Enter focus mode" aria-label="Enter focus mode">
+                        <i data-lucide="maximize" class="h-4 w-4"></i>
+                        <span class="hidden sm:inline">Focus mode</span>
+                    </button>
+                </div>
+
+                <div class="mt-4 flex flex-col items-center gap-1.5">
+                    <div class="flex items-center gap-1.5" data-cycle-dots aria-hidden="true"></div>
+                    <p class="text-[10.5px] text-slate-400">Sessions before a long break</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 border-t border-slate-100 px-5 py-4 sm:grid-cols-4 sm:px-6">
+                <label class="block">
+                    <span class="mb-1 block text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">Focus</span>
+                    <div class="relative">
+                        <input type="number" min="1" max="120" value="@Model.Profile.FocusMinutes" class="input no-spinner h-9 pr-8 text-[13px]" data-duration="focus" aria-label="Focus minutes" />
+                        <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-slate-400">min</span>
+                    </div>
+                </label>
+                <label class="block">
+                    <span class="mb-1 block text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">Short break</span>
+                    <div class="relative">
+                        <input type="number" min="1" max="60" value="@Model.Profile.ShortBreakMinutes" class="input no-spinner h-9 pr-8 text-[13px]" data-duration="short" aria-label="Short break minutes" />
+                        <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-slate-400">min</span>
+                    </div>
+                </label>
+                <label class="block">
+                    <span class="mb-1 block text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">Long break</span>
+                    <div class="relative">
+                        <input type="number" min="1" max="90" value="@Model.Profile.LongBreakMinutes" class="input no-spinner h-9 pr-8 text-[13px]" data-duration="long" aria-label="Long break minutes" />
+                        <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-slate-400">min</span>
+                    </div>
+                </label>
+                <label class="block">
+                    <span class="mb-1 block text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">Long break after</span>
+                    <div class="relative">
+                        <input type="number" min="2" max="8" value="@Model.Profile.LongBreakInterval" class="input no-spinner h-9 pr-8 text-[13px]" data-duration="interval" aria-label="Sessions before a long break" />
+                        <span class="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-slate-400">sess.</span>
+                    </div>
+                </label>
+            </div>
+            <p class="border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-[10.5px] text-slate-500 sm:px-6">
+                Duration changes apply immediately and are remembered in this browser. Server defaults live in <a href="/Settings" class="font-medium text-brand-600 hover:text-brand-700">Settings</a>.
+            </p>
+        </section>
+
+        <aside class="space-y-5">
+            <section class="card card-pad">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600"><i data-lucide="target" class="h-4 w-4"></i></span>
+                    <div>
+                        <h2 class="text-[14px] font-semibold text-ink-900">What are you working on?</h2>
+                        <p class="text-[10.5px] text-slate-500">Link this session to a course or task.</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <div>
+                        <label for="timerCourse" class="label">Course</label>
+                        <select id="timerCourse" class="select">
+                            <option value="" data-name="">General study</option>
+                            @foreach (var course in Model.Courses)
+                            {
+                                <option value="@course.Id" data-name="@course.Name">@course.Code — @course.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label for="timerTask" class="label">Task <span class="font-normal text-slate-400">(optional)</span></label>
+                        <select id="timerTask" class="select">
+                            <option value="" data-title="" data-course="">No specific task</option>
+                            @foreach (var item in Model.ActiveTasks)
+                            {
+                                <option value="@item.Task.Id" data-course="@item.Task.CourseId" data-title="@item.Task.Title">@item.Task.Title</option>
+                            }
+                        </select>
+                        <p class="hint">Selecting a task automatically selects its course.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card card-pad" data-daily-goal="@Model.Profile.DailyGoalMinutes">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-[14px] font-semibold text-ink-900">Today's focus</h2>
+                    <span class="chip bg-brand-50 text-brand-700 ring-brand-100"><span data-goal-percent>@goalPercent%</span> of goal</span>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Focused</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900" data-stat-today-focus>@DisplayHelpers.MinutesLabel(Model.Summary.TodayFocusMinutes)</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sessions</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900"><span data-stat-today-sessions>@Model.Summary.TodaySessions</span></p>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-slate-500">Daily goal</span>
+                        <span class="font-medium text-slate-600">@Model.Profile.DailyGoalMinutes min</span>
+                    </div>
+                    <div class="progress mt-1.5">
+                        <span id="goalBar" style="width:@(Math.Min(100, goalPercent))%"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-center">
+                    <div>
+                        <p class="text-[15px] font-semibold leading-none text-ink-900"><span data-stat-total-focus>@DisplayHelpers.MinutesLabel(Model.Summary.TotalFocusMinutes)</span></p>
+                        <p class="mt-1 text-[10px] font-medium text-slate-500">Total focus</p>
+                    </div>
+                    <div>
+                        <p class="text-[15px] font-semibold leading-none text-ink-900"><span data-stat-streak>@Model.Summary.Streak-day streak</span></p>
+                        <p class="mt-1 text-[10px] font-medium text-slate-500">Current streak</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card card-pad">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><i data-lucide="coffee" class="h-4 w-4"></i></span>
+                    <h2 class="text-[14px] font-semibold text-ink-900">A gentler rhythm</h2>
+                </div>
+                <ul class="mt-3 space-y-2 text-[11.5px] leading-relaxed text-slate-600">
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> Put the phone in another room before you start.</li>
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> Stand up and move during every break.</li>
+                    <li class="flex gap-2"><i data-lucide="check" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500"></i> One task per session beats a vague to-do list.</li>
+                </ul>
+                @if (Model.TodayPlannedMinutes > 0)
+                {
+                    <div class="mt-4 rounded-xl bg-slate-50 px-3 py-2.5">
+                        <p class="text-[11px] text-slate-600">You have <span class="font-semibold text-ink-900">@DisplayHelpers.MinutesLabel(Model.TodayPlannedMinutes)</span> planned today.</p>
+                        <a href="/Planner" class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-brand-600 hover:text-brand-700">Open planner <i data-lucide="arrow-right" class="h-3 w-3"></i></a>
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card xl:col-span-2">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Recent focus sessions</p>
+                    <p class="mt-0.5 text-xs text-slate-500">The latest completed sessions, newest first</p>
+                </div>
+                <a href="/Analytics" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Analytics</a>
+            </div>
+
+            <div id="sessionList">
+                @if (Model.RecentSessions.Count == 0)
+                {
+                    <div id="sessionEmpty" class="p-5">
+                        @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                        {
+                            Icon = "timer",
+                            Title = "No sessions logged yet",
+                            Text = "Start the timer above. Completed focus sessions are saved automatically and appear here."
+                        })
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in Model.RecentSessions)
+                    {
+                        <div class="flex items-center gap-3 border-b border-slate-100 px-5 py-3.5 last:border-0 sm:px-6" data-session-row>
+                            <span class="h-2 w-2 shrink-0 rounded-full" style="background-color:@(item.Course?.Color ?? "#4f46e5")"></span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-[13px] font-medium text-ink-900">
+                                    @(item.Course?.Name ?? "General study")@(string.IsNullOrWhiteSpace(item.TaskTitle) ? "" : $" · {item.TaskTitle}")
+                                </p>
+                                <p class="mt-0.5 text-[11px] text-slate-500">@DisplayHelpers.DateTimeLabel(item.Session.CompletedAt)</p>
+                            </div>
+                            <span class="shrink-0 rounded-md bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600">@item.Session.DurationMinutes min</span>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+
+        <section class="card card-pad">
+            <div class="flex items-center gap-2">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600"><i data-lucide="sparkles" class="h-4 w-4"></i></span>
+                <h2 class="text-[14px] font-semibold text-ink-900">How the timer works</h2>
+            </div>
+            <ol class="mt-4 space-y-3 text-[11.5px] leading-relaxed text-slate-600">
+                <li class="flex gap-2.5"><span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">1</span><span>Pick a course or task, then press <span class="font-medium text-ink-900">Start focus</span>.</span></li>
+                <li class="flex gap-2.5"><span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">2</span><span>Navigate anywhere — the timer uses a real end timestamp, not page memory.</span></li>
+                <li class="flex gap-2.5"><span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">3</span><span>When focus ends, the session is saved and a break begins if auto-start is on.</span></li>
+                <li class="flex gap-2.5"><span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">4</span><span>Closing the browser stops the countdown display; reopened sessions catch up and save.</span></li>
+            </ol>
+        </section>
+    </div>
+
+    <div id="focusOverlay" class="fixed inset-0 z-[100] hidden bg-ink-950/95 p-4 backdrop-blur-sm">
+        <div class="flex h-full w-full flex-col items-center justify-center text-center text-white">
+            <button type="button" class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white" data-timer-action="close-focus" data-overlay-close aria-label="Exit focus mode">
+                <i data-lucide="x" class="h-5 w-5"></i>
+            </button>
+
+            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50" data-timer-status>Ready</p>
+            <p class="mt-4 text-[12px] font-medium text-white/70" data-timer-phase>Focus session</p>
+            <p class="timer-display mt-3 text-[92px] font-semibold leading-none sm:text-[120px]" data-timer-display>@Model.Profile.FocusMinutes:00</p>
+            <p class="mt-4 max-w-md truncate rounded-full bg-white/10 px-4 py-1.5 text-[12px] text-white/70" data-timer-context>General study</p>
+
+            <div class="mt-9 flex items-center gap-2.5">
+                <button type="button" class="btn h-12 min-w-[160px] bg-white px-6 text-ink-900 hover:bg-white/90" data-timer-action="toggle">
+                    <i data-lucide="play" class="h-4 w-4" data-icon-play></i>
+                    <i data-lucide="pause" class="hidden h-4 w-4" data-icon-pause></i>
+                    <span data-start-label>Start focus</span>
+                </button>
+                <button type="button" class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20" data-timer-action="reset" aria-label="Reset timer" title="Reset timer">
+                    <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                </button>
+                <button type="button" class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20" data-timer-action="skip" aria-label="Skip phase" title="Skip phase">
+                    <i data-lucide="skip-forward" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <p class="mt-6 text-[11px] text-white/40">Press Escape or close this overlay to keep the timer running in the background.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var goal = Number(document.querySelector("[data-daily-goal]")?.dataset.dailyGoal || 0);
+            var bar = document.getElementById("goalBar");
+            var percent = document.querySelector("[data-goal-percent]");
+
+            window.addEventListener("studyflow:session-recorded", function (event) {
+                var data = event.detail || {};
+                if (!goal || typeof data.todayFocusMinutes !== "number") return;
+                var value = Math.min(100, Math.round(data.todayFocusMinutes * 100 / goal));
+                if (bar) bar.style.width = value + "%";
+                if (percent) percent.textContent = Math.round(data.todayFocusMinutes * 100 / goal) + "%";
+            });
+
+            document.addEventListener("keydown", function (event) {
+                var overlay = document.getElementById("focusOverlay");
+                if (event.key === "Escape" && overlay && !overlay.classList.contains("hidden")) {
+                    overlay.classList.add("hidden");
+                    document.body.classList.remove("overflow-hidden");
+                }
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,230 @@
+@model TaskListViewModel
+@{
+    var f = Model.Filters;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+    string StatusUrl(AcademicTaskStatus? status)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(f.Q)) parts.Add("Q=" + Uri.EscapeDataString(f.Q));
+        if (!string.IsNullOrWhiteSpace(f.CourseId)) parts.Add("CourseId=" + Uri.EscapeDataString(f.CourseId));
+        if (f.Priority.HasValue) parts.Add("Priority=" + f.Priority);
+        if (f.Type.HasValue) parts.Add("Type=" + f.Type);
+        if (f.OverdueOnly) parts.Add("OverdueOnly=true");
+        if (f.Sort != "due") parts.Add("Sort=" + f.Sort);
+        if (status.HasValue) parts.Add("Status=" + status);
+        return "/Tasks" + (parts.Count > 0 ? "?" + string.Join("&", parts) : "");
+    }
+
+    var tabs = new[]
+    {
+        (Label: "All tasks", Count: Model.Counts.All, Url: StatusUrl(null), Active: !f.Status.HasValue),
+        (Label: "To do", Count: Model.Counts.ToDo, Url: StatusUrl(AcademicTaskStatus.ToDo), Active: f.Status == AcademicTaskStatus.ToDo),
+        (Label: "In progress", Count: Model.Counts.InProgress, Url: StatusUrl(AcademicTaskStatus.InProgress), Active: f.Status == AcademicTaskStatus.InProgress),
+        (Label: "Completed", Count: Model.Counts.Completed, Url: StatusUrl(AcademicTaskStatus.Completed), Active: f.Status == AcademicTaskStatus.Completed),
+        (Label: "Overdue", Count: Model.Counts.Overdue, Url: "/Tasks?OverdueOnly=true", Active: f.OverdueOnly)
+    };
+}
+
+@section PageActions {
+    <a href="/Tasks/Create" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="plus" class="h-4 w-4"></i>
+        New task
+    </a>
+}
+
+<div class="space-y-5">
+    <div class="card overflow-hidden">
+        <div class="no-scrollbar flex overflow-x-auto border-b border-slate-100 px-2 sm:px-3">
+            @foreach (var tab in tabs)
+            {
+                <a href="@tab.Url" class="relative flex shrink-0 items-center gap-2 px-3 py-3.5 text-[12.5px] font-medium transition-colors @(tab.Active ? "text-brand-700" : "text-slate-500 hover:text-ink-900")">
+                    @tab.Label
+                    <span class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold @(tab.Active ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500")">@tab.Count</span>
+                    @if (tab.Active)
+                    {
+                        <span class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-brand-600"></span>
+                    }
+                </a>
+            }
+        </div>
+
+        <form method="get" asp-controller="Tasks" asp-action="Index" class="card-pad space-y-4">
+            @if (f.Status.HasValue)
+            {
+                <input type="hidden" name="Status" value="@f.Status" />
+            }
+            @if (f.OverdueOnly)
+            {
+                <input type="hidden" name="OverdueOnly" value="true" />
+            }
+
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div class="relative flex-1">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                    </span>
+                    <input type="search" name="Q" value="@f.Q" class="input pl-10" placeholder="Search tasks, descriptions or courses…" aria-label="Search tasks" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                        Search
+                    </button>
+                    @if (f.HasFilters)
+                    {
+                        <a href="/Tasks" class="btn btn-secondary">
+                            <i data-lucide="x" class="h-4 w-4"></i>
+                            Clear
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div>
+                    <label for="taskCourse" class="label">Course</label>
+                    <select id="taskCourse" name="CourseId" class="select" data-auto-submit>
+                        <option value="">All courses</option>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <option value="@course.Id" selected="@(f.CourseId == course.Id ? "selected" : null)">@course.Code — @course.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="taskPriority" class="label">Priority</label>
+                    <select id="taskPriority" name="Priority" class="select" data-auto-submit>
+                        <option value="">Any priority</option>
+                        @foreach (var priority in Enum.GetValues<TaskPriority>())
+                        {
+                            <option value="@priority" selected="@(f.Priority == priority ? "selected" : null)">@priority.DisplayName()</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="taskType" class="label">Type</label>
+                    <select id="taskType" name="Type" class="select" data-auto-submit>
+                        <option value="">Any type</option>
+                        @foreach (var type in Enum.GetValues<AcademicTaskType>())
+                        {
+                            <option value="@type" selected="@(f.Type == type ? "selected" : null)">@type.DisplayName()</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="taskSort" class="label">Sort by</label>
+                    <select id="taskSort" name="Sort" class="select" data-auto-submit>
+                        <option value="due" selected="@(f.Sort == "due" ? "selected" : null)">Due soonest</option>
+                        <option value="dueDesc" selected="@(f.Sort == "dueDesc" ? "selected" : null)">Due latest</option>
+                        <option value="priority" selected="@(f.Sort == "priority" ? "selected" : null)">Priority</option>
+                        <option value="created" selected="@(f.Sort == "created" ? "selected" : null)">Recently added</option>
+                        <option value="title" selected="@(f.Sort == "title" ? "selected" : null)">Title A–Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="inline-flex cursor-pointer items-center gap-2 text-[12.5px] font-medium text-slate-600">
+                <input type="checkbox" name="OverdueOnly" value="true" class="h-4 w-4 rounded border-slate-300" checked="@(f.OverdueOnly ? "checked" : null)" />
+                Show only overdue tasks
+            </label>
+        </form>
+    </div>
+
+    <section class="card overflow-hidden">
+        <div class="card-header">
+            <div>
+                <p class="text-[15px] font-semibold text-ink-900">Task list</p>
+                <p class="mt-0.5 text-xs text-slate-500">@Model.Tasks.Count task@(Model.Tasks.Count == 1 ? "" : "s")@(f.HasFilters ? " matching the current filters" : "")</p>
+            </div>
+            <span class="chip hidden bg-slate-50 text-slate-600 ring-slate-200 sm:inline-flex">
+                <i data-lucide="list-checks" class="h-3 w-3"></i>
+                @Model.Counts.Completed completed
+            </span>
+        </div>
+
+        @if (Model.Tasks.Count == 0)
+        {
+            <div class="p-5">
+                @if (f.HasFilters)
+                {
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "filter-x",
+                        Title = "No tasks match those filters",
+                        Text = "Try a different course, priority or search term — or clear everything to see the full list.",
+                        ActionUrl = "/Tasks",
+                        ActionLabel = "Clear filters"
+                    })
+                }
+                else
+                {
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "check-square-2",
+                        Title = "Nothing on the list yet",
+                        Text = "Add your next assignment, reading or revision block so it stops living in your head.",
+                        ActionUrl = "/Tasks/Create",
+                        ActionLabel = "Create a task"
+                    })
+                }
+            </div>
+        }
+        else
+        {
+            <div class="divide-y divide-slate-100">
+                @foreach (var item in Model.Tasks)
+                {
+                    var task = item.Task;
+                    var done = task.Status == AcademicTaskStatus.Completed;
+                    var dueTone = done ? "text-slate-400" : task.IsOverdue ? "text-rose-600" : task.IsDueToday ? "text-amber-600" : "text-slate-500";
+                    <div class="group flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50/70 sm:items-center sm:px-6">
+                        <form method="post" asp-controller="Tasks" asp-action="ToggleComplete" asp-route-id="@task.Id" asp-route-returnUrl="@returnUrl" class="shrink-0">
+                            <button type="submit" class="mt-0.5 flex h-5 w-5 items-center justify-center rounded-[6px] border transition-colors sm:mt-0 @(done ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent hover:border-brand-500 hover:text-brand-200")" aria-label="Toggle @task.Title" title="Toggle complete">
+                                <i data-lucide="check" class="h-3 w-3"></i>
+                            </button>
+                        </form>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <a href="/Tasks/Details/@task.Id" class="min-w-0 truncate text-[13.5px] font-medium @(done ? "text-slate-400 line-through" : "text-ink-900 hover:text-brand-700")">@task.Title</a>
+                                @if (task.IsOverdue)
+                                {
+                                    <span class="chip bg-rose-50 py-0.5 text-rose-700 ring-rose-200">Overdue</span>
+                                }
+                            </div>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                                @if (item.Course is not null)
+                                {
+                                    <a href="/Courses/Details/@item.Course.Id" class="inline-flex items-center gap-1.5 hover:text-brand-700">
+                                        <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                        @item.Course.Code
+                                    </a>
+                                    <span class="text-slate-300">·</span>
+                                }
+                                <span class="chip bg-white py-0.5 @DisplayHelpers.TypeBadge(task.Type)">@task.Type.DisplayName()</span>
+                                <span class="font-medium @dueTone">@DisplayHelpers.DueLabel(task.DueDate)</span>
+                                <span class="hidden text-slate-300 sm:inline">·</span>
+                                <span class="hidden items-center gap-1 sm:inline-flex"><i data-lucide="clock-3" class="h-3 w-3"></i>@DisplayHelpers.MinutesLabel(task.EstimatedMinutes)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-1.5">
+                            <span class="chip hidden @DisplayHelpers.PriorityBadge(task.Priority) md:inline-flex">@task.Priority.DisplayName()</span>
+                            <span class="chip hidden @DisplayHelpers.StatusBadge(task.Status) lg:inline-flex">@task.Status.DisplayName()</span>
+                            <a href="/Tasks/Edit/@task.Id" class="icon-btn h-8 w-8" aria-label="Edit @task.Title" title="Edit">
+                                <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                            </a>
+                            <form method="post" asp-controller="Tasks" asp-action="Delete" asp-route-id="@task.Id" asp-route-returnUrl="@returnUrl"
+                                  data-confirm="Delete “@task.Title”? This cannot be undone.">
+                                <button type="submit" class="icon-btn h-8 w-8 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete @task.Title" title="Delete">
+                                    <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</div>

@@ -1,0 +1,150 @@
+@model TaskFormViewModel
+@{
+    var cancelUrl = Model.IsEdit ? $"/Tasks/Details/{Model.Id}" : (Model.CourseId is not null ? $"/Courses/Details/{Model.CourseId}" : "/Tasks");
+    var presets = new[] { 15, 30, 45, 60, 90, 120 };
+}
+
+<div class="grid gap-5 xl:grid-cols-3">
+    <div class="space-y-5 xl:col-span-2">
+        <section class="card card-pad">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <i data-lucide="square-pen" class="h-4 w-4"></i>
+                </span>
+                <div>
+                    <h2 class="text-[15px] font-semibold text-ink-900">What needs doing?</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">Give the task a clear title and a realistic estimate.</p>
+                </div>
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors mt-5"></div>
+
+            <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label asp-for="Title" class="label">Task title</label>
+                    <input asp-for="Title" class="input" placeholder="Problem Set 6 — Graph traversals" autocomplete="off" />
+                    <span asp-validation-for="Title" class="field-validation-error"></span>
+                </div>
+                <div class="sm:col-span-2">
+                    <label asp-for="Description" class="label">Description <span class="font-normal text-slate-400">(optional)</span></label>
+                    <textarea asp-for="Description" class="textarea" rows="4" placeholder="What exactly needs to be done? Any links, chapters or submission notes?"></textarea>
+                    <span asp-validation-for="Description" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="CourseId" class="label">Course</label>
+                    <select asp-for="CourseId" class="select">
+                        <option value="">No course / personal</option>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <option value="@course.Id" selected="@(Model.CourseId == course.Id ? "selected" : null)">@course.Code — @course.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CourseId" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="Type" class="label">Task type</label>
+                    <select asp-for="Type" class="select">
+                        @foreach (var type in Enum.GetValues<AcademicTaskType>())
+                        {
+                            <option value="@type" selected="@(Model.Type == type ? "selected" : null)">@type.DisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Type" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="Priority" class="label">Priority</label>
+                    <select asp-for="Priority" class="select">
+                        @foreach (var priority in Enum.GetValues<TaskPriority>())
+                        {
+                            <option value="@priority" selected="@(Model.Priority == priority ? "selected" : null)">@priority.DisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Priority" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="Status" class="label">Status</label>
+                    <select asp-for="Status" class="select">
+                        @foreach (var status in Enum.GetValues<AcademicTaskStatus>())
+                        {
+                            <option value="@status" selected="@(Model.Status == status ? "selected" : null)">@status.DisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Status" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="StartDate" class="label">Start date</label>
+                    <input asp-for="StartDate" type="date" class="input" />
+                    <span asp-validation-for="StartDate" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="DueDate" class="label">Due date</label>
+                    <input asp-for="DueDate" type="date" class="input" />
+                    <span asp-validation-for="DueDate" class="field-validation-error"></span>
+                </div>
+                <div class="sm:col-span-2">
+                    <label asp-for="EstimatedMinutes" class="label">Estimated study time</label>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative">
+                            <input asp-for="EstimatedMinutes" type="number" min="5" max="1440" step="5" class="input no-spinner w-32 pr-12" />
+                            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] font-medium text-slate-400">min</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            @foreach (var preset in presets)
+                            {
+                                <button type="button" class="chip bg-slate-50 text-slate-600 ring-slate-200 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-200" data-duration-preset="@preset">@preset min</button>
+                            }
+                        </div>
+                    </div>
+                    <span asp-validation-for="EstimatedMinutes" class="field-validation-error"></span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <aside class="space-y-5">
+        <section class="card card-pad">
+            <h2 class="text-[15px] font-semibold text-ink-900">A good task is specific</h2>
+            <ul class="mt-4 space-y-3 text-[12.5px] leading-relaxed text-slate-600">
+                <li class="flex gap-2.5">
+                    <i data-lucide="target" class="mt-0.5 h-4 w-4 shrink-0 text-brand-500"></i>
+                    <span>Start with a verb: <span class="font-medium text-ink-900">write</span>, <span class="font-medium text-ink-900">solve</span>, <span class="font-medium text-ink-900">review</span>.</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <i data-lucide="calendar-clock" class="mt-0.5 h-4 w-4 shrink-0 text-amber-500"></i>
+                    <span>Set the due date to the real deadline, not the day you hope to start.</span>
+                </li>
+                <li class="flex gap-2.5">
+                    <i data-lucide="timer" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"></i>
+                    <span>Estimates make it easier to plan focus sessions that actually fit.</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="card card-pad">
+            <div class="rounded-xl bg-slate-50 p-3.5">
+                <p class="text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">Tip</p>
+                <p class="mt-1 text-[12px] leading-relaxed text-slate-600">Link the task to a course to see it in that course's workspace and in course analytics.</p>
+            </div>
+            <div class="mt-5 flex flex-col gap-2">
+                <button type="submit" class="btn btn-primary w-full">
+                    <i data-lucide="save" class="h-4 w-4"></i>
+                    @(Model.IsEdit ? "Save changes" : "Create task")
+                </button>
+                <a href="@cancelUrl" class="btn btn-secondary w-full">Cancel</a>
+            </div>
+        </section>
+    </aside>
+</div>
+
+<script>
+    (function () {
+        var input = document.getElementById("EstimatedMinutes");
+        if (!input) return;
+        document.querySelectorAll("[data-duration-preset]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                input.value = button.getAttribute("data-duration-preset");
+                input.focus();
+            });
+        });
+    })();
+</script>

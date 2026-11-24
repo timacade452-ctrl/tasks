@@ -1,0 +1,82 @@
+@model PlanFormViewModel
+@{
+    var action = Model.IsEdit ? "Update" : "Create";
+    var editId = Model.IsEdit ? Model.Id : null;
+    var cancelUrl = $"/Planner?date={Model.Date:yyyy-MM-dd}";
+}
+
+<form method="post" asp-controller="Planner" asp-action="@action" asp-route-id="@editId" class="mt-4 space-y-3.5">
+    <input type="hidden" asp-for="Id" />
+
+    <div>
+        <label asp-for="Title" class="label">Title</label>
+        <input asp-for="Title" class="input" placeholder="Deep work — graph algorithms" autocomplete="off" />
+        <span asp-validation-for="Title" class="field-validation-error"></span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label asp-for="Type" class="label">Type</label>
+            <select asp-for="Type" class="select">
+                @foreach (var type in Enum.GetValues<StudyPlanType>())
+                {
+                    <option value="@type" selected="@(Model.Type == type ? "selected" : null)">@type.DisplayName()</option>
+                }
+            </select>
+            <span asp-validation-for="Type" class="field-validation-error"></span>
+        </div>
+        <div>
+            <label asp-for="CourseId" class="label">Course</label>
+            <select asp-for="CourseId" class="select">
+                <option value="">No course</option>
+                @foreach (var course in Model.Courses)
+                {
+                    <option value="@course.Id" selected="@(Model.CourseId == course.Id ? "selected" : null)">@course.Code</option>
+                }
+            </select>
+            <span asp-validation-for="CourseId" class="field-validation-error"></span>
+        </div>
+    </div>
+
+    <div>
+        <label asp-for="Date" class="label">Date</label>
+        <input asp-for="Date" type="date" class="input" />
+        <span asp-validation-for="Date" class="field-validation-error"></span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label asp-for="StartTime" class="label">Start</label>
+            <input asp-for="StartTime" type="time" class="input" data-plan-start />
+            <span asp-validation-for="StartTime" class="field-validation-error"></span>
+        </div>
+        <div>
+            <label asp-for="EndTime" class="label">End</label>
+            <input asp-for="EndTime" type="time" class="input" data-plan-end />
+            <span asp-validation-for="EndTime" class="field-validation-error"></span>
+        </div>
+    </div>
+
+    <div>
+        <label asp-for="Location" class="label">Location <span class="font-normal text-slate-400">(optional)</span></label>
+        <input asp-for="Location" class="input" placeholder="Library, 3rd floor" autocomplete="off" />
+        <span asp-validation-for="Location" class="field-validation-error"></span>
+    </div>
+
+    <div>
+        <label asp-for="Description" class="label">Notes <span class="font-normal text-slate-400">(optional)</span></label>
+        <textarea asp-for="Description" class="textarea" rows="3" placeholder="What will you actually do in this block?"></textarea>
+        <span asp-validation-for="Description" class="field-validation-error"></span>
+    </div>
+
+    <div class="flex flex-col gap-2 pt-1">
+        <button type="submit" class="btn btn-primary w-full">
+            <i data-lucide="save" class="h-4 w-4"></i>
+            @(Model.IsEdit ? "Save changes" : "Add to plan")
+        </button>
+        @if (Model.IsEdit)
+        {
+            <a href="@cancelUrl" class="btn btn-secondary w-full">Cancel edit</a>
+        }
+    </div>
+</form>

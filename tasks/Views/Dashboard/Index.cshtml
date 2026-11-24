@@ -1,0 +1,358 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Subtitle"] = $"{DisplayHelpers.Greeting()}, {Model.Profile.FullName.Split(' ')[0]}. Here is your academic snapshot for {DateTime.Today.ToString("dddd, MMMM d", CultureInfo.InvariantCulture)}.";
+    var goalPercent = DisplayHelpers.Percent(Model.TodayFocusMinutes, Model.DailyGoalMinutes);
+    var remainingGoal = Math.Max(0, Model.DailyGoalMinutes - Model.TodayFocusMinutes);
+}
+
+@section PageActions {
+    <a href="/Materials/Upload" class="btn btn-secondary btn-sm sm:h-10">
+        <i data-lucide="upload" class="h-4 w-4"></i>
+        <span class="hidden sm:inline">Upload material</span>
+        <span class="sm:hidden">Upload</span>
+    </a>
+    <a href="/Pomodoro" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="play" class="h-4 w-4"></i>
+        Start focus
+    </a>
+}
+
+<div class="space-y-5">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Active courses",
+            Value = Model.TotalCourses.ToString(),
+            Caption = "This semester",
+            Icon = "book-open",
+            Tone = "brand"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Study materials",
+            Value = Model.TotalMaterials.ToString(),
+            Caption = "Ready to preview or download",
+            Icon = "folder-open",
+            Tone = "sky"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Pending tasks",
+            Value = Model.PendingTasks.ToString(),
+            Caption = Model.OverdueTasks > 0 ? $"{Model.OverdueTasks} overdue · {Model.TodayCompletedTasks} done today" : $"{Model.TodayCompletedTasks} completed today",
+            Icon = "check-square-2",
+            Tone = Model.OverdueTasks > 0 ? "rose" : "amber"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Study time",
+            Value = $"{DisplayHelpers.Hours(Model.TotalFocusMinutes):0.#} hr",
+            Caption = Model.Streak > 0 ? $"{Model.Streak}-day study streak" : "Log your first focus session",
+            Icon = "clock-3",
+            Tone = "emerald"
+        })
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+        <section class="card card-pad lg:col-span-2">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Study activity</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Focus minutes across the last seven days</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    @if (Model.WeekChangePercent != 0)
+                    {
+                        <span class="chip @(Model.WeekChangePercent > 0 ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-rose-50 text-rose-700 ring-rose-200")">
+                            <i data-lucide="@(Model.WeekChangePercent > 0 ? "trending-up" : "trending-down")" class="h-3 w-3"></i>
+                            @(Model.WeekChangePercent > 0 ? "+" : "")@Model.WeekChangePercent%
+                        </span>
+                    }
+                    <a href="/Analytics" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Details</a>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div>
+                    <p class="text-[28px] font-semibold leading-none tracking-[-0.03em]">@DisplayHelpers.Hours(Model.WeekFocusMinutes)<span class="ml-1 text-sm font-medium text-slate-500">hr</span></p>
+                    <p class="mt-1.5 text-[11px] text-slate-500">This week · vs @DisplayHelpers.Hours(Model.PreviousWeekFocusMinutes) hr last week</p>
+                </div>
+                <div class="ml-auto flex items-center gap-4 text-[11px] text-slate-500">
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-600"></span> Today</span>
+                    <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-brand-400/80"></span> Previous days</span>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                @await Html.PartialAsync("_StudyBars", new StudyBarsViewModel { Points = Model.Last7Days, MaxMinutes = Model.MaxWeeklyMinutes })
+            </div>
+        </section>
+
+        <section class="card card-pad" data-daily-goal="@Model.DailyGoalMinutes">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Daily focus goal</p>
+                    <p class="mt-0.5 text-xs text-slate-500">@Model.DailyGoalMinutes minutes planned</p>
+                </div>
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <i data-lucide="target" class="h-4 w-4"></i>
+                </span>
+            </div>
+
+            <div class="mt-5 flex items-center justify-center">
+                @await Html.PartialAsync("_ProgressRing", new ProgressRingViewModel
+                {
+                    Percent = goalPercent,
+                    PrimaryText = $"{goalPercent}%",
+                    SecondaryText = "of daily goal",
+                    Size = 168
+                })
+            </div>
+
+            <div class="mt-5 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Focused today</p>
+                    <p class="mt-1 text-sm font-semibold" data-stat-today-focus>@DisplayHelpers.MinutesLabel(Model.TodayFocusMinutes)</p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
+                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sessions</p>
+                    <p class="mt-1 text-sm font-semibold"><span data-stat-today-sessions>@Model.TodaySessions</span> completed</p>
+                </div>
+            </div>
+
+            <p class="mt-4 text-center text-[11.5px] leading-relaxed text-slate-500">
+                @if (remainingGoal > 0)
+                {
+                    <text>@DisplayHelpers.MinutesLabel(remainingGoal) to go. </text>
+                    <span class="font-medium text-brand-600">One session at a time.</span>
+                }
+                else
+                {
+                    <text>Goal reached — everything from here is a bonus.</text>
+                }
+            </p>
+
+            <a href="/Pomodoro" class="btn btn-secondary mt-3 w-full">
+                <i data-lucide="timer" class="h-4 w-4"></i>
+                Open focus timer
+            </a>
+        </section>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+        <section class="card lg:col-span-2">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Upcoming deadlines</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Closest due dates across all courses</p>
+                </div>
+                <a href="/Tasks" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">View all</a>
+            </div>
+
+            @if (Model.UpcomingDeadlines.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "party-popper",
+                        Title = "No deadlines waiting",
+                        Text = "Everything currently assigned is complete. Add a task to keep your week moving.",
+                        ActionUrl = "/Tasks/Create",
+                        ActionLabel = "Create a task"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var item in Model.UpcomingDeadlines)
+                    {
+                        var task = item.Task;
+                        var dueTone = task.IsOverdue ? "text-rose-600" : task.IsDueToday ? "text-amber-600" : "text-slate-500";
+                        <div class="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:px-6">
+                            <form method="post" asp-controller="Tasks" asp-action="ToggleComplete" asp-route-id="@task.Id" asp-route-returnUrl="/Dashboard">
+                                <button type="submit" class="flex h-5 w-5 items-center justify-center rounded-[6px] border @(task.Status == AcademicTaskStatus.Completed ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent hover:border-brand-500")" aria-label="Mark @task.Title complete" title="Mark complete">
+                                    <i data-lucide="check" class="h-3 w-3"></i>
+                                </button>
+                            </form>
+                            <div class="min-w-0 flex-1">
+                                <a href="/Tasks/Details/@task.Id" class="block truncate text-[13.5px] font-medium text-ink-900 hover:text-brand-700">@task.Title</a>
+                                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                                    @if (item.Course is not null)
+                                    {
+                                        <span class="inline-flex items-center gap-1.5 text-slate-500">
+                                            <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                            @item.Course.Code
+                                        </span>
+                                        <span class="text-slate-300">·</span>
+                                    }
+                                    <span class="text-slate-500">@task.Type.DisplayName()</span>
+                                    <span class="text-slate-300">·</span>
+                                    <span class="font-medium @dueTone">@DisplayHelpers.DueLabel(task.DueDate)</span>
+                                </div>
+                            </div>
+                            <span class="chip hidden shrink-0 @DisplayHelpers.PriorityBadge(task.Priority) sm:inline-flex">@task.Priority.DisplayName()</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Today's schedule</p>
+                    <p class="mt-0.5 text-xs text-slate-500">@Model.TodaySchedule.Count plan@(Model.TodaySchedule.Count == 1 ? "" : "s") for today</p>
+                </div>
+                <a href="/Planner" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Planner</a>
+            </div>
+
+            @if (Model.TodaySchedule.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "calendar-plus",
+                        Title = "Your day is open",
+                        Text = "Block a realistic study session so the day has a shape.",
+                        ActionUrl = "/Planner",
+                        ActionLabel = "Plan your day"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="space-y-0 p-5">
+                    @foreach (var item in Model.TodaySchedule)
+                    {
+                        var active = item.Plan.Start <= DateTime.Now && item.Plan.End > DateTime.Now;
+                        <div class="flex gap-3 pb-4 last:pb-0">
+                            <div class="flex w-11 shrink-0 flex-col pt-0.5">
+                                <span class="text-[11px] font-semibold text-ink-900">@DisplayHelpers.Time(item.Plan.Start)</span>
+                                <span class="mt-1 text-[10px] text-slate-400">@((int)(item.Plan.End - item.Plan.Start).TotalMinutes)m</span>
+                            </div>
+                            <div class="relative flex flex-col items-center">
+                                <span class="h-2.5 w-2.5 rounded-full @(active ? "bg-brand-600 ring-4 ring-brand-100" : "bg-slate-200")"></span>
+                                <span class="mt-1 w-px flex-1 bg-slate-100"></span>
+                            </div>
+                            <div class="min-w-0 flex-1 pb-1">
+                                <div class="flex items-start justify-between gap-2">
+                                    <a href="/Planner?date=@item.Plan.Start.ToString("yyyy-MM-dd")" class="truncate text-[13px] font-medium text-ink-900 hover:text-brand-700">@item.Plan.Title</a>
+                                    @if (active)
+                                    {
+                                        <span class="chip shrink-0 bg-brand-50 text-brand-700 ring-brand-100">Now</span>
+                                    }
+                                </div>
+                                <p class="mt-1 truncate text-[11px] text-slate-500">
+                                    @if (item.Course is not null)
+                                    {
+                                        <span>@item.Course.Code · </span>
+                                    }
+                                    @item.Plan.Type.DisplayName()
+                                    @if (!string.IsNullOrWhiteSpace(item.Plan.Location))
+                                    {
+                                        <span> · @item.Plan.Location</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+        <section class="card lg:col-span-2">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Your courses</p>
+                    <p class="mt-0.5 text-xs text-slate-500">A quick look at this semester</p>
+                </div>
+                <a href="/Courses" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Manage</a>
+            </div>
+
+            @if (Model.Courses.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "book-plus",
+                        Title = "No courses yet",
+                        Text = "Add your first course to start organizing materials and tasks.",
+                        ActionUrl = "/Courses/Create",
+                        ActionLabel = "Create a course"
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="grid gap-3 p-5 sm:grid-cols-2">
+                    @foreach (var summary in Model.Courses)
+                    {
+                        <a href="/Courses/Details/@summary.Course.Id" class="group rounded-xl border border-slate-200 p-4 transition-colors hover:border-slate-300 hover:bg-slate-50/50">
+                            <div class="flex items-start gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white" style="background-color:@summary.Course.Color">
+                                    <i data-lucide="@summary.Course.Icon" class="h-4 w-4"></i>
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wide" style="color:@summary.Course.Color">@summary.Course.Code</p>
+                                    <p class="mt-0.5 truncate text-[13px] font-medium text-ink-900 group-hover:text-brand-700">@summary.Course.Name</p>
+                                </div>
+                                <i data-lucide="arrow-up-right" class="h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand-500"></i>
+                            </div>
+                            <div class="mt-3 flex items-center gap-3 text-[11px] text-slate-500">
+                                <span>@summary.MaterialsCount materials</span>
+                                <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                                <span>@summary.OpenTasks open tasks</span>
+                                <span class="ml-auto font-medium text-slate-600">@DisplayHelpers.Hours(summary.FocusMinutes) hr</span>
+                            </div>
+                            <div class="progress mt-2.5">
+                                <span style="width:@(summary.TaskProgress)%;background-color:@summary.Course.Color"></span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <div>
+                    <p class="text-[15px] font-semibold text-ink-900">Recent activity</p>
+                    <p class="mt-0.5 text-xs text-slate-500">Your latest study moments</p>
+                </div>
+            </div>
+            @if (Model.RecentActivity.Count == 0)
+            {
+                <div class="p-5">
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "activity",
+                        Title = "Nothing logged yet",
+                        Text = "Completed sessions, tasks and uploads will appear here."
+                    })
+                </div>
+            }
+            else
+            {
+                <div class="divide-y divide-slate-100">
+                    @foreach (var activity in Model.RecentActivity)
+                    {
+                        <div class="flex items-start gap-3 px-5 py-3.5">
+                            <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg @DisplayHelpers.ActivityTone(activity.Tone)">
+                                <i data-lucide="@activity.Icon" class="h-4 w-4"></i>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-[12.5px] font-medium text-ink-900">@activity.Title</p>
+                                <p class="mt-0.5 truncate text-[11px] text-slate-500">@activity.Detail</p>
+                            </div>
+                            <span class="shrink-0 text-[10.5px] text-slate-400">@DisplayHelpers.RelativeTime(activity.When)</span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>

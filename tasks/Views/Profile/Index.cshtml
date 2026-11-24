@@ -1,0 +1,175 @@
+@model ProfileViewModel
+@{
+    var profile = Model.Profile;
+}
+
+@section PageActions {
+    <a href="/Settings" class="btn btn-secondary btn-sm sm:h-10">
+        <i data-lucide="settings-2" class="h-4 w-4"></i>
+        Settings
+    </a>
+    <a href="/Analytics" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+        View analytics
+    </a>
+}
+
+<div class="space-y-5">
+    <section class="card overflow-hidden">
+        <div class="h-20 bg-gradient-to-r from-brand-600 via-brand-500 to-sky-500"></div>
+        <div class="card-pad -mt-10">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div class="flex items-end gap-4">
+                    <span class="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-4 border-white text-[24px] font-semibold text-white shadow-pop" style="background-color:@profile.AvatarColor">
+                        @profile.Initials
+                    </span>
+                    <div class="min-w-0 pb-1">
+                        <h2 class="truncate text-[22px] font-semibold tracking-[-0.02em] text-ink-900">@profile.FullName</h2>
+                        <p class="mt-0.5 truncate text-[12.5px] text-slate-500">@profile.Email</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                            @if (!string.IsNullOrWhiteSpace(profile.Program))
+                            {
+                                <span class="chip bg-slate-50 text-slate-600 ring-slate-200"><i data-lucide="graduation-cap" class="h-3 w-3"></i>@profile.Program</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(profile.YearOfStudy))
+                            {
+                                <span class="chip bg-slate-50 text-slate-600 ring-slate-200">@profile.YearOfStudy</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="flex shrink-0 flex-wrap items-center gap-2 pb-1">
+                    <span class="chip bg-emerald-50 text-emerald-700 ring-emerald-200"><i data-lucide="flame" class="h-3 w-3"></i>@Model.Summary.Streak-day streak</span>
+                    <a href="#edit-profile" class="btn btn-secondary btn-sm">
+                        <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                        Edit profile
+                    </a>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(profile.Bio))
+            {
+                <p class="mt-4 max-w-3xl text-[13px] leading-relaxed text-slate-600">@profile.Bio</p>
+            }
+
+            <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4 text-[11.5px] text-slate-500">
+                @if (!string.IsNullOrWhiteSpace(profile.University))
+                {
+                    <span class="inline-flex items-center gap-1.5"><i data-lucide="building-2" class="h-3.5 w-3.5 text-slate-400"></i>@profile.University</span>
+                }
+                <span class="inline-flex items-center gap-1.5"><i data-lucide="database" class="h-3.5 w-3.5 text-slate-400"></i>Demo workspace · resets on restart</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="grid gap-5 xl:grid-cols-3">
+        <section class="card card-pad xl:col-span-2" id="edit-profile">
+            <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                    <i data-lucide="user-round-pen" class="h-4 w-4"></i>
+                </span>
+                <div>
+                    <h2 class="text-[15px] font-semibold text-ink-900">Edit profile</h2>
+                    <p class="mt-0.5 text-xs text-slate-500">How you appear across StudyFlow.</p>
+                </div>
+            </div>
+
+            <form method="post" asp-controller="Profile" asp-action="Update" class="mt-5">
+                @await Html.PartialAsync("_ProfileForm", Model.Form)
+            </form>
+        </section>
+
+        <aside class="space-y-5">
+            <section class="card card-pad">
+                <h2 class="text-[13.5px] font-semibold text-ink-900">Study snapshot</h2>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Courses</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900">@Model.Courses.Count</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Materials</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900">@Model.MaterialsCount</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Tasks done</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900">@Model.CompletedTasks</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 px-3 py-2.5">
+                        <p class="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Focus time</p>
+                        <p class="mt-1 text-[16px] font-semibold text-ink-900">@DisplayHelpers.Hours(Model.Summary.TotalFocusMinutes)<span class="text-[10px] font-medium text-slate-400"> hr</span></p>
+                    </div>
+                </div>
+                <p class="mt-4 text-[11px] leading-relaxed text-slate-500">@Model.Summary.TotalSessions focus sessions logged across @Model.Courses.Count courses.</p>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <p class="text-[13.5px] font-semibold text-ink-900">Your courses</p>
+                        <p class="mt-0.5 text-[11px] text-slate-500">This semester</p>
+                    </div>
+                    <a href="/Courses" class="text-[11px] font-medium text-brand-600 hover:text-brand-700">All</a>
+                </div>
+                @if (Model.Courses.Count == 0)
+                {
+                    <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">No courses yet.</p>
+                }
+                else
+                {
+                    <div class="divide-y divide-slate-100">
+                        @foreach (var summary in Model.Courses)
+                        {
+                            <a href="/Courses/Details/@summary.Course.Id" class="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50/70">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white" style="background-color:@summary.Course.Color">
+                                    <i data-lucide="@summary.Course.Icon" class="h-3.5 w-3.5"></i>
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-semibold uppercase tracking-wide" style="color:@summary.Course.Color">@summary.Course.Code</span>
+                                    <span class="block truncate text-[12px] font-medium text-ink-900">@summary.Course.Name</span>
+                                </span>
+                                <span class="shrink-0 text-[10.5px] font-medium text-slate-500">@summary.TaskProgress%</span>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <p class="text-[15px] font-semibold text-ink-900">Recent activity</p>
+                <p class="mt-0.5 text-xs text-slate-500">Your latest study moments across the workspace</p>
+            </div>
+            <a href="/Analytics" class="text-[12px] font-medium text-brand-600 hover:text-brand-700">Analytics</a>
+        </div>
+        @if (Model.RecentActivity.Count == 0)
+        {
+            <p class="px-5 py-6 text-center text-[11.5px] text-slate-500">No activity yet. Your sessions, tasks and uploads will show up here.</p>
+        }
+        else
+        {
+            <div class="divide-y divide-slate-100">
+                @foreach (var activity in Model.RecentActivity)
+                {
+                    <a href="@(activity.Url ?? "#")" class="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/70 sm:px-6">
+                        <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg @DisplayHelpers.ActivityTone(activity.Tone)">
+                            <i data-lucide="@activity.Icon" class="h-4 w-4"></i>
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate text-[12.5px] font-medium text-ink-900">@activity.Title</span>
+                            <span class="mt-0.5 block truncate text-[11px] text-slate-500">@activity.Detail</span>
+                        </span>
+                        <span class="shrink-0 text-[10.5px] text-slate-400">@DisplayHelpers.RelativeTime(activity.When)</span>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

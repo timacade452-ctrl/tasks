@@ -1,0 +1,44 @@
+@model ProfileFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+<div class="grid gap-4 sm:grid-cols-2">
+    <div>
+        <label asp-for="FullName" class="label">Full name</label>
+        <input asp-for="FullName" class="input" autocomplete="name" />
+        <span asp-validation-for="FullName" class="field-validation-error"></span>
+    </div>
+    <div>
+        <label asp-for="Email" class="label">University email</label>
+        <input asp-for="Email" type="email" class="input" autocomplete="email" />
+        <span asp-validation-for="Email" class="field-validation-error"></span>
+    </div>
+    <div class="sm:col-span-2">
+        <label asp-for="University" class="label">University</label>
+        <input asp-for="University" class="input" autocomplete="organization" />
+        <span asp-validation-for="University" class="field-validation-error"></span>
+    </div>
+    <div>
+        <label asp-for="Program" class="label">Program</label>
+        <input asp-for="Program" class="input" />
+        <span asp-validation-for="Program" class="field-validation-error"></span>
+    </div>
+    <div>
+        <label asp-for="YearOfStudy" class="label">Year</label>
+        <input asp-for="YearOfStudy" class="input" placeholder="Junior · Year 3" />
+        <span asp-validation-for="YearOfStudy" class="field-validation-error"></span>
+    </div>
+    <div class="sm:col-span-2">
+        <label asp-for="Bio" class="label">Short bio <span class="font-normal text-slate-400">(optional)</span></label>
+        <textarea asp-for="Bio" class="textarea" rows="4" placeholder="What are you studying? What are you working towards?"></textarea>
+        <span asp-validation-for="Bio" class="field-validation-error"></span>
+    </div>
+</div>
+
+<div class="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-5">
+    <button type="submit" class="btn btn-primary">
+        <i data-lucide="save" class="h-4 w-4"></i>
+        Save profile
+    </button>
+    <a href="/Profile" class="btn btn-secondary">Discard changes</a>
+</div>

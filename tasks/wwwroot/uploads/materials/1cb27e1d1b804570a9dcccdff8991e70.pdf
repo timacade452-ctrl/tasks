@@ -1,0 +1,70 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 874 >>
+stream
+BT
+/F1 22 Tf
+72 718 Td
+(ISP Architecture ? Lecture 01: Core Network Topology) Tj
+/F2 11 Tf
+0 -36 Td
+0 -19 Td
+(Course: IT 411 ? ISP Architecture Engineering) Tj
+0 -19 Td
+(Lecturer: Eng. Abdullahi Abdirahman | Room 4) Tj
+0 -19 Td
+(Global Sciences University ? Year Four Semester 1) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Topics) Tj
+0 -19 Td
+(1. Internet hierarchy and Autonomous Systems \(AS\)) Tj
+0 -19 Td
+(2. Internet Exchange Points \(IXPs\) and peering agreements) Tj
+0 -19 Td
+(3. BGP exterior and interior routing fundamentals) Tj
+0 -19 Td
+(4. MPLS forwarding, label distribution, and traffic engineering) Tj
+0 -19 Td
+(5. Carrier-grade network reliability and redundancy) Tj
+0 -19 Td
+() Tj
+0 -19 Td
+(Key takeaway: Scalable ISP architectures isolate customer edge from the high-speed) Tj
+0 -19 Td
+(transit core.) Tj
+0 -19 Td
+(Schedule: Saturdays 2:00 PM - 5:00 PM \(Room 4\).) Tj
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000353 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1374
+%%EOF

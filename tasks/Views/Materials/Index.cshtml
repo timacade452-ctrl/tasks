@@ -1,0 +1,224 @@
+@model MaterialListViewModel
+@{
+    var f = Model.Filters;
+}
+
+@section PageActions {
+    <a href="/Materials/Upload" class="btn btn-primary btn-sm sm:h-10">
+        <i data-lucide="upload" class="h-4 w-4"></i>
+        Upload material
+    </a>
+}
+
+<div class="space-y-5">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "PDF documents",
+            Value = Model.PdfCount.ToString(),
+            Caption = "Notes, briefs and references",
+            Icon = "file-text",
+            Tone = "rose"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Word documents",
+            Value = Model.WordCount.ToString(),
+            Caption = "Templates and guides",
+            Icon = "file-type-2",
+            Tone = "blue"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Slide decks",
+            Value = Model.SlidesCount.ToString(),
+            Caption = "Lecture presentations",
+            Icon = "presentation",
+            Tone = "amber"
+        })
+        @await Html.PartialAsync("_StatCard", new StatCardViewModel
+        {
+            Label = "Library size",
+            Value = DisplayHelpers.FileSize(Model.TotalSize),
+            Caption = $"{Model.Materials.Count} file{(Model.Materials.Count == 1 ? "" : "s")} matching filters",
+            Icon = "hard-drive",
+            Tone = "emerald"
+        })
+    </div>
+
+    <section class="card card-pad">
+        <form method="get" asp-controller="Materials" asp-action="Index" class="space-y-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div class="relative flex-1">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                    </span>
+                    <input type="search" name="Q" value="@f.Q" class="input pl-10" placeholder="Search titles, descriptions, filenames or courses…" aria-label="Search materials" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                        Search
+                    </button>
+                    @if (f.HasFilters)
+                    {
+                        <a href="/Materials" class="btn btn-secondary">
+                            <i data-lucide="x" class="h-4 w-4"></i>
+                            Clear
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div>
+                    <label for="filterCourse" class="label">Course</label>
+                    <select id="filterCourse" name="CourseId" class="select" data-auto-submit>
+                        <option value="">All courses</option>
+                        @foreach (var course in Model.Courses)
+                        {
+                            <option value="@course.Id" selected="@(f.CourseId == course.Id ? "selected" : null)">@course.Code — @course.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="filterKind" class="label">File type</label>
+                    <select id="filterKind" name="Kind" class="select" data-auto-submit>
+                        <option value="">Any type</option>
+                        <option value="pdf" selected="@(f.Kind == "pdf" ? "selected" : null)">PDF</option>
+                        <option value="word" selected="@(f.Kind == "word" ? "selected" : null)">Word</option>
+                        <option value="slides" selected="@(f.Kind == "slides" ? "selected" : null)">PowerPoint</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filterCategory" class="label">Category</label>
+                    <select id="filterCategory" name="Category" class="select" data-auto-submit>
+                        <option value="">All categories</option>
+                        @foreach (var category in Enum.GetValues<MaterialCategory>())
+                        {
+                            <option value="@category" selected="@(f.Category == category ? "selected" : null)">@category.DisplayName()</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="filterSort" class="label">Sort by</label>
+                    <select id="filterSort" name="Sort" class="select" data-auto-submit>
+                        <option value="newest" selected="@(f.Sort == "newest" ? "selected" : null)">Newest first</option>
+                        <option value="oldest" selected="@(f.Sort == "oldest" ? "selected" : null)">Oldest first</option>
+                        <option value="title" selected="@(f.Sort == "title" ? "selected" : null)">Title A–Z</option>
+                        <option value="size" selected="@(f.Sort == "size" ? "selected" : null)">Largest first</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="card overflow-hidden">
+        <div class="card-header">
+            <div>
+                <p class="text-[15px] font-semibold text-ink-900">Material library</p>
+                <p class="mt-0.5 text-xs text-slate-500">@Model.Materials.Count result@(Model.Materials.Count == 1 ? "" : "s")@(f.HasFilters ? " with the current filters" : " in your library")</p>
+            </div>
+            <span class="chip hidden bg-slate-50 text-slate-600 ring-slate-200 sm:inline-flex">
+                <i data-lucide="shield-check" class="h-3 w-3"></i>
+                Validated uploads
+            </span>
+        </div>
+
+        @if (Model.Materials.Count == 0)
+        {
+            <div class="p-5">
+                @if (f.HasFilters)
+                {
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "search-x",
+                        Title = "No materials match those filters",
+                        Text = "Try a different course, file type or search term — or clear the filters to see your whole library.",
+                        ActionUrl = "/Materials",
+                        ActionLabel = "Clear filters"
+                    })
+                }
+                else
+                {
+                    @await Html.PartialAsync("_EmptyState", new EmptyStateViewModel
+                    {
+                        Icon = "folder-open",
+                        Title = "Your library is empty",
+                        Text = "Upload a PDF, Word document or PowerPoint deck and it will appear here, ready to preview.",
+                        ActionUrl = "/Materials/Upload",
+                        ActionLabel = "Upload material"
+                    })
+                }
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="data-table min-w-[720px]">
+                    <thead>
+                        <tr>
+                            <th class="pl-5 sm:pl-6">Material</th>
+                            <th>Course</th>
+                            <th>Category</th>
+                            <th>Size</th>
+                            <th>Uploaded</th>
+                            <th class="pr-5 text-right sm:pr-6">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Materials)
+                        {
+                            var material = item.Material;
+                            <tr>
+                                <td class="pl-5 sm:pl-6">
+                                    <div class="flex items-center gap-3">
+                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset @DisplayHelpers.FileTone(material.FileExtension)">
+                                            <i data-lucide="@DisplayHelpers.FileIcon(material.FileExtension)" class="h-4 w-4"></i>
+                                        </span>
+                                        <div class="min-w-0">
+                                            <a href="/Materials/Preview/@material.Id" class="block max-w-[280px] truncate text-[13px] font-medium text-ink-900 hover:text-brand-700">@material.Title</a>
+                                            <p class="mt-0.5 truncate text-[11px] text-slate-500">@material.OriginalFileName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (item.Course is not null)
+                                    {
+                                        <a href="/Courses/Details/@item.Course.Id" class="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-700 hover:text-brand-700">
+                                            <span class="h-1.5 w-1.5 rounded-full" style="background-color:@item.Course.Color"></span>
+                                            @item.Course.Code
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[12px] text-slate-400">No course</span>
+                                    }
+                                </td>
+                                <td><span class="chip bg-slate-50 text-slate-600 ring-slate-200">@material.Category.DisplayName()</span></td>
+                                <td class="whitespace-nowrap text-[12px] text-slate-500">@DisplayHelpers.FileSize(material.FileSizeBytes)</td>
+                                <td class="whitespace-nowrap text-[12px] text-slate-500">@DisplayHelpers.FriendlyDate(material.UploadedAt.ToLocalTime())</td>
+                                <td class="pr-5 sm:pr-6">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="/Materials/Preview/@material.Id" class="icon-btn h-8 w-8" aria-label="Preview @material.Title" title="Preview">
+                                            <i data-lucide="eye" class="h-4 w-4"></i>
+                                        </a>
+                                        <a href="/Materials/Download/@material.Id" class="icon-btn h-8 w-8" aria-label="Download @material.Title" title="Download">
+                                            <i data-lucide="download" class="h-4 w-4"></i>
+                                        </a>
+                                        <form method="post" asp-controller="Materials" asp-action="Delete" asp-route-id="@material.Id" asp-route-returnUrl="/Materials"
+                                              data-confirm="Delete “@material.Title”? The stored file will be removed from the demo workspace.">
+                                            <button type="submit" class="icon-btn h-8 w-8 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete @material.Title" title="Delete">
+                                                <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>
